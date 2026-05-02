@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   const loadProfile = useCallback(async (u: User, s: Session) => {
+    setLoading(true);
     setUser(u);
     setSession(s);
 
