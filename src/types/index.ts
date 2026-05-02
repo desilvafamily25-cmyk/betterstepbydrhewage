@@ -5,7 +5,7 @@ export type SideEffect =
 
 export type ExerciseLevel = 'none' | 'light' | 'moderate' | 'intense';
 export type AlcoholIntake = 'none' | 'low' | 'moderate' | 'high';
-export type MedicationName = 'Semaglutide' | 'Tirzepatide' | 'Liraglutide' | 'Phentermine' | 'Orlistat' | 'Metformin' | 'Other';
+export type MedicationName = 'Ozempic' | 'Wegovy' | 'Mounjaro' | 'Saxenda' | 'Trulicity' | 'Other';
 export type ReminderType = 'weight-check' | 'medication-dose' | 'gp-review' | 'prescription-review' | 'pathology' | 'lifestyle';
 export type ReminderStatus = 'pending' | 'acknowledged' | 'dismissed';
 
