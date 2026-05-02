@@ -1,0 +1,19 @@
+:root {
+  --bs-forest-green: #1B3D34;
+  --bs-logo-ink: #123B34;
+  --bs-teal: #0F6D6D;
+  --bs-soft-stone: #E7E5E1;
+  --bs-warm-sand: #DCC9B0;
+  --bs-brushed-copper: #B8735E;
+  --bs-copper-dark: #8F513E;
+  --bs-slate-gray: #3C4346;
+  --bs-white: #FFFFFF;
+
+  --bs-font-heading: "Playfair Display", Georgia, serif;
+  --bs-font-body: "Inter", Arial, sans-serif;
+  --bs-radius-card: 16px;
+  --bs-radius-button: 12px;
+  --bs-radius-pill: 999px;
+  --bs-shadow-card: 0 12px 30px rgba(27, 61, 52, 0.12);
+  --bs-shadow-button: 0 6px 16px rgba(27, 61, 52, 0.16);
+}

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="BetterStep icon mark">
+  <defs>
+    <linearGradient id="leafGrad" x1="70" y1="90" x2="370" y2="430" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#1B3D34"/>
+      <stop offset="1" stop-color="#0F6D6D"/>
+    </linearGradient>
+    <linearGradient id="copperGrad" x1="80" y1="390" x2="430" y2="290" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#DCC9B0"/>
+      <stop offset="0.55" stop-color="#B8735E"/>
+      <stop offset="1" stop-color="#8F513E"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#000000" flood-opacity="0.12"/>
+    </filter>
+  </defs>
+  <g filter="url(#shadow)">
+    <path d="M170 470 C110 385 77 286 95 196 C113 107 176 49 252 27 C244 95 283 158 350 196 C304 228 274 273 267 326 C260 379 224 425 170 470 Z" fill="url(#leafGrad)"/>
+    <path d="M171 437 C196 364 229 302 280 246 C238 268 203 300 174 340 C153 371 142 402 140 430 Z" fill="#ffffff" opacity="0.92"/>
+    <path d="M219 330 h52 v-52 h52 v-52 h55" fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M218 331 h50 v-50 h50 v-50 h52" fill="none" stroke="#1B3D34" stroke-width="13" stroke-linecap="round" stroke-linejoin="round" opacity="0.22"/>
+    <path d="M80 397 C158 412 240 390 328 331 C371 302 411 280 454 272 C411 325 353 365 282 395 C203 429 135 429 80 397 Z" fill="url(#copperGrad)"/>
+    <path d="M112 386 C186 397 260 374 336 323" fill="none" stroke="#ffffff" stroke-width="13" stroke-linecap="round" opacity="0.9"/>
+  </g>
+</svg>
