@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { MedicationCard } from '../../components/MedicationCard';
 import { SafetyAlert } from '../../components/SafetyAlert';
@@ -70,11 +70,20 @@ export function PatientMedication() {
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ ...BLANK_MED });
+  const [justSelected, setJustSelected] = useState(false);
+  const [errors, setErrors] = useState<{ dose?: string; startDate?: string }>({});
 
   const inputClass = 'w-full rounded-xl border border-[#E7E5E1] bg-white px-4 py-3 text-sm text-[#1B3D34] focus:outline-none focus:ring-2 focus:ring-[#1B3D34]';
 
   const selectedConfig = MED_CONFIG.find(m => m.brand === form.name) ?? MED_CONFIG[0];
   const isOther = form.name === 'Other';
+
+  // Clear the pulse highlight after 2.5s
+  useEffect(() => {
+    if (!justSelected) return;
+    const t = setTimeout(() => setJustSelected(false), 2500);
+    return () => clearTimeout(t);
+  }, [justSelected]);
 
   const handleBrandChange = (brand: string) => {
     const config = MED_CONFIG.find(m => m.brand === brand);
@@ -85,14 +94,24 @@ export function PatientMedication() {
       dose: config.doses[0] ?? '',
       frequency: config.frequency,
     }));
+    setJustSelected(true);
+    setErrors({});
   };
 
   const handleSave = async () => {
+    const newErrors: { dose?: string; startDate?: string } = {};
+    if (!form.dose) newErrors.dose = 'Please select a dose';
+    if (!form.startDate) newErrors.startDate = 'Please enter a start date';
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
     setSaving(true);
     await saveMedication(form);
     setSaving(false);
     setShowForm(false);
     setForm({ ...BLANK_MED });
+    setErrors({});
   };
 
   if (loading) {
@@ -165,17 +184,31 @@ export function PatientMedication() {
 
               {/* Dose */}
               <div>
-                <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Current Dose</label>
-                {isOther ? (
-                  <input className={inputClass} value={form.dose}
-                    onChange={e => setForm(f => ({ ...f, dose: e.target.value }))}
-                    placeholder="e.g. 1.0 mg" />
-                ) : (
-                  <select className={inputClass} value={form.dose}
-                    onChange={e => setForm(f => ({ ...f, dose: e.target.value }))}>
-                    {selectedConfig.doses.map(d => <option key={d}>{d}</option>)}
-                  </select>
-                )}
+                <label className={`block text-xs font-semibold mb-1.5 uppercase tracking-wide transition-colors duration-300 ${
+                  justSelected ? 'text-[#1a7a5e]' : errors.dose ? 'text-red-500' : 'text-[#3C4346]'
+                }`}>
+                  Current Dose *
+                  {justSelected && <span className="ml-2 normal-case font-normal text-[#1a7a5e]">← select your dose</span>}
+                </label>
+                <div className={`rounded-xl transition-all duration-300 ${
+                  justSelected
+                    ? 'ring-2 ring-[#1a7a5e] ring-offset-1 shadow-[0_0_0_4px_rgba(26,122,94,0.12)]'
+                    : errors.dose
+                    ? 'ring-2 ring-red-400'
+                    : ''
+                }`}>
+                  {isOther ? (
+                    <input className={inputClass} value={form.dose}
+                      onChange={e => { setForm(f => ({ ...f, dose: e.target.value })); setErrors(e2 => ({ ...e2, dose: undefined })); }}
+                      placeholder="e.g. 1.0 mg" />
+                  ) : (
+                    <select className={inputClass} value={form.dose}
+                      onChange={e => { setForm(f => ({ ...f, dose: e.target.value })); setErrors(e2 => ({ ...e2, dose: undefined })); }}>
+                      {selectedConfig.doses.map(d => <option key={d}>{d}</option>)}
+                    </select>
+                  )}
+                </div>
+                {errors.dose && <p className="text-xs text-red-500 mt-1">{errors.dose}</p>}
               </div>
 
               {/* Frequency */}
@@ -200,9 +233,22 @@ export function PatientMedication() {
               {/* Start date + Next dose */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Start Date</label>
-                  <input type="date" className={inputClass} value={form.startDate}
-                    onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+                  <label className={`block text-xs font-semibold mb-1.5 uppercase tracking-wide transition-colors duration-300 ${
+                    justSelected ? 'text-[#1a7a5e]' : errors.startDate ? 'text-red-500' : 'text-[#3C4346]'
+                  }`}>
+                    Start Date *
+                  </label>
+                  <div className={`rounded-xl transition-all duration-300 ${
+                    justSelected
+                      ? 'ring-2 ring-[#1a7a5e] ring-offset-1 shadow-[0_0_0_4px_rgba(26,122,94,0.12)]'
+                      : errors.startDate
+                      ? 'ring-2 ring-red-400'
+                      : ''
+                  }`}>
+                    <input type="date" className={inputClass} value={form.startDate}
+                      onChange={e => { setForm(f => ({ ...f, startDate: e.target.value })); setErrors(e2 => ({ ...e2, startDate: undefined })); }} />
+                  </div>
+                  {errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>}
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Next Dose Date</label>
