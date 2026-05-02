@@ -4,6 +4,7 @@ import { StatCard } from '../../components/StatCard';
 import { MedicationCard } from '../../components/MedicationCard';
 import { ReminderCard } from '../../components/ReminderCard';
 import { SafetyAlert } from '../../components/SafetyAlert';
+import { InstallAppBanner } from '../../components/InstallAppBanner';
 import { usePatientData } from '../../hooks/usePatientData';
 import { weightChange, percentBodyWeightChange, daysUntil, formatDate, latestCheckIn } from '../../utils';
 import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles } from 'lucide-react';
@@ -65,6 +66,9 @@ export function PatientHome() {
             {latest ? `Last logged: ${formatDate(latest.date)}` : 'Start your first check-in today'}
           </p>
         </div>
+
+        {/* PWA install prompt */}
+        <InstallAppBanner />
 
         {/* Key stats */}
         <div className="grid grid-cols-2 gap-3">
