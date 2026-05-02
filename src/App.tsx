@@ -22,13 +22,21 @@ import { ClinicianSettings } from './pages/clinician/ClinicianSettings';
 
 function LoadingScreen() {
   return (
-    <div className="min-h-dvh bg-gradient-to-br from-[#0f2640] to-[#135c47] flex items-center justify-center">
+    <div className="min-h-dvh bg-[#f7f8fa] flex items-center justify-center">
       <div className="text-center">
-        <div className="w-16 h-16 rounded-3xl bg-white/10 flex items-center justify-center mx-auto mb-4">
-          <span className="text-3xl font-black text-white">BS</span>
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <img
+            src="/betterstep-brand-logo.png"
+            alt="BetterStep"
+            className="w-14 h-14 rounded-2xl object-contain"
+          />
+          <div className="text-left">
+            <p className="font-['Playfair_Display'] text-2xl font-bold leading-none text-[#1B3D34]">BetterStep</p>
+            <p className="text-sm font-semibold text-[#B8735E] mt-0.5">by Dr. Hewage</p>
+          </div>
         </div>
-        <div className="w-8 h-1 bg-white/30 rounded-full mx-auto overflow-hidden">
-          <div className="h-full w-1/2 bg-white rounded-full animate-pulse" />
+        <div className="w-8 h-1 bg-[#1B3D34]/20 rounded-full mx-auto overflow-hidden">
+          <div className="h-full w-1/2 bg-[#1B3D34] rounded-full animate-pulse" />
         </div>
       </div>
     </div>
