@@ -3,7 +3,7 @@ import { AppShell } from '../../components/AppShell';
 import { usePatientData } from '../../hooks/usePatientData';
 import { weightChange, percentBodyWeightChange, formatDate } from '../../utils';
 import { APP_CONFIG } from '../../config';
-import { Printer, Copy, Calendar, Check, Download } from 'lucide-react';
+import { Copy, Calendar, Check, Download } from 'lucide-react';
 
 export function PatientReviewSummary() {
   const { patient, checkIns, medications, loading } = usePatientData();
