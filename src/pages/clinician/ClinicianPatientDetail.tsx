@@ -133,6 +133,7 @@ export function ClinicianPatientDetail() {
   const [messageBody, setMessageBody] = useState('');
   const [messagePriority, setMessagePriority] = useState<PatientMessagePriority>('normal');
   const [messageStatus, setMessageStatus] = useState<'idle' | 'sent' | 'error'>('idle');
+  const [messageError, setMessageError] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
 
   const {
@@ -205,12 +206,14 @@ export function ClinicianPatientDetail() {
     setMessageBody(template.body);
     setMessagePriority(template.priority);
     setMessageStatus('idle');
+    setMessageError('');
   };
 
   const handleSendMessage = async () => {
     const subject = messageSubject.trim();
     const body = messageBody.trim();
     if (!subject || !body) {
+      setMessageError('Add a subject and message, then try sending again.');
       setMessageStatus('error');
       return;
     }
@@ -220,6 +223,7 @@ export function ClinicianPatientDetail() {
     setSendingMessage(false);
 
     if (error) {
+      setMessageError(error.message || 'Message could not be sent. Please try again.');
       setMessageStatus('error');
       return;
     }
@@ -227,6 +231,7 @@ export function ClinicianPatientDetail() {
     setMessageSubject('');
     setMessageBody('');
     setMessagePriority('normal');
+    setMessageError('');
     setMessageStatus('sent');
     setTimeout(() => setMessageStatus('idle'), 2500);
   };
@@ -378,6 +383,7 @@ export function ClinicianPatientDetail() {
               onChange={e => {
                 setMessageSubject(e.target.value);
                 setMessageStatus('idle');
+                setMessageError('');
               }}
             />
           </div>
@@ -391,6 +397,7 @@ export function ClinicianPatientDetail() {
               onChange={e => {
                 setMessageBody(e.target.value);
                 setMessageStatus('idle');
+                setMessageError('');
               }}
             />
           </div>
@@ -410,7 +417,7 @@ export function ClinicianPatientDetail() {
 
           {messageStatus === 'error' && (
             <p className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-xs font-medium text-red-700">
-              Add a subject and message, then try sending again.
+              {messageError}
             </p>
           )}
 
