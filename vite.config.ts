@@ -8,8 +8,14 @@ export default defineConfig({
     react(),
     tailwindcss(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.png', 'betterstep-brand-logo.png'],
+      includeAssets: ['favicon.png', 'betterstep-brand-logo.png', 'betterstep-app-icon.png'],
+      injectManifest: {
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,mp4,vtt}'],
+      },
       manifest: {
         name: 'BetterStep by Dr. Hewage',
         short_name: 'BetterStep',
@@ -26,9 +32,6 @@ export default defineConfig({
           { src: 'betterstep-brand-logo.png', sizes: '1024x1024', type: 'image/png' },
           { src: 'betterstep-brand-logo.png', sizes: '1024x1024', type: 'image/png', purpose: 'any maskable' },
         ],
-      },
-      workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
       },
     }),
   ],

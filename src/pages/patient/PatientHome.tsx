@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AppShell, PatientMoreLinks } from '../../components/AppShell';
 import { StatCard } from '../../components/StatCard';
@@ -7,13 +8,17 @@ import { SafetyAlert } from '../../components/SafetyAlert';
 import { InstallAppBanner } from '../../components/InstallAppBanner';
 import { usePatientData } from '../../hooks/usePatientData';
 import { usePatientMessages } from '../../hooks/usePatientMessages';
+import { usePushNotifications } from '../../hooks/usePushNotifications';
 import { weightChange, percentBodyWeightChange, daysUntil, formatDate, latestCheckIn } from '../../utils';
-import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles, CheckCircle2, Mail } from 'lucide-react';
+import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles, CheckCircle2, Mail, Bell, BellOff } from 'lucide-react';
 import { APP_CONFIG } from '../../config';
 
 export function PatientHome() {
   const { patient, checkIns, medications, reminders, loading, updateReminderStatus, updateMedication } = usePatientData();
   const { unreadCount } = usePatientMessages();
+  const { permission, requestPermission } = usePushNotifications(patient?.id);
+  const [notifDismissed, setNotifDismissed] = useState(false);
+  const [notifEnabling, setNotifEnabling] = useState(false);
 
   const medication = medications[0];
   const latest = patient ? latestCheckIn(checkIns, patient.id) : undefined;
@@ -127,6 +132,46 @@ export function PatientHome() {
 
         {/* PWA install prompt */}
         <InstallAppBanner />
+
+        {/* Push notification permission prompt */}
+        {permission === 'default' && !notifDismissed && (
+          <div className="flex items-start gap-3 bg-[#1B3D34]/8 border border-[#1B3D34]/20 rounded-2xl px-4 py-3.5">
+            <div className="w-8 h-8 rounded-xl bg-[#1B3D34]/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+              <Bell size={15} className="text-[#1B3D34]" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#1B3D34] leading-tight">Enable message alerts</p>
+              <p className="text-xs text-[#3C4346] mt-0.5 leading-snug">Get notified when Dr. Hewage sends you a message, even when the app is closed.</p>
+              <div className="flex gap-2 mt-2.5">
+                <button
+                  onClick={async () => {
+                    setNotifEnabling(true);
+                    await requestPermission();
+                    setNotifEnabling(false);
+                  }}
+                  disabled={notifEnabling}
+                  className="px-3 py-1.5 bg-[#1B3D34] text-white text-xs font-semibold rounded-xl disabled:opacity-60"
+                >
+                  {notifEnabling ? 'Enabling…' : 'Enable alerts'}
+                </button>
+                <button
+                  onClick={() => setNotifDismissed(true)}
+                  className="px-3 py-1.5 text-xs font-medium text-[#747B7D] rounded-xl"
+                >
+                  Not now
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {permission === 'denied' && !notifDismissed && (
+          <div className="flex items-center gap-3 bg-[#F6F3EE] border border-[#E7E5E1] rounded-2xl px-4 py-3">
+            <BellOff size={15} className="text-[#747B7D] flex-shrink-0" />
+            <p className="text-xs text-[#747B7D] flex-1">Notifications blocked. Enable them in your browser settings to receive message alerts.</p>
+            <button onClick={() => setNotifDismissed(true)} className="text-xs text-[#747B7D] font-medium">Dismiss</button>
+          </div>
+        )}
 
         {/* Key stats */}
         <div className="grid grid-cols-2 gap-3">
