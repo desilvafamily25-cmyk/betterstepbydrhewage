@@ -9,7 +9,10 @@ interface VideoItem {
   description: string;
   tag: string;
   tagColour: string;
-  embedUrl: string;
+  embedUrl?: string;
+  videoUrl?: string;
+  captionUrl?: string;
+  thumbnailUrl?: string;
 }
 
 interface EducationCard {
@@ -25,6 +28,15 @@ const VIDEO_LIBRARY: VideoItem[] = [
     tag: 'Ozempic',
     tagColour: 'bg-[#0F6D6D]/10 text-[#0F6D6D]',
     embedUrl: 'https://nni-video.videomarketingplatform.co/v.ihtml/player.html?token=89300d04546cef764b792e1fb2f7132c&source=embed&photo_id=90732263',
+  },
+  {
+    title: 'How to use the Mounjaro KwikPen',
+    description: 'Step-by-step guide to preparing and injecting your weekly Mounjaro dose safely.',
+    tag: 'Mounjaro',
+    tagColour: 'bg-[#B8735E]/15 text-[#8A4D3C]',
+    videoUrl: '/mounjaro-kwikpen.mp4',
+    captionUrl: '/mounjaro-kwikpen-en.vtt',
+    thumbnailUrl: '/mounjaro-kwikpen-thumbnail.jpg',
   },
 ];
 
@@ -96,19 +108,30 @@ function VideoCard({ video }: { video: VideoItem }) {
 
   return (
     <div className="bg-white rounded-2xl border border-[#E7E5E1] shadow-sm overflow-hidden">
-      {/* Collapsed: thumbnail-style tap target */}
       {!open ? (
-        <button
-          onClick={() => setOpen(true)}
-          className="w-full text-left"
-        >
-          {/* Dark green banner with play icon */}
-          <div className="bg-gradient-to-br from-[#1B3D34] to-[#0F6D6D] px-5 py-8 flex flex-col items-center justify-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
-              <PlayCircle size={36} className="text-white" />
+        <button onClick={() => setOpen(true)} className="w-full text-left">
+          {video.thumbnailUrl ? (
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <img
+                src={video.thumbnailUrl}
+                alt={video.title}
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center gap-2">
+                <div className="w-14 h-14 rounded-full bg-white/25 flex items-center justify-center">
+                  <PlayCircle size={36} className="text-white" />
+                </div>
+                <p className="text-white/90 text-xs font-medium">Tap to watch</p>
+              </div>
             </div>
-            <p className="text-white/80 text-xs font-medium">Tap to watch</p>
-          </div>
+          ) : (
+            <div className="bg-gradient-to-br from-[#1B3D34] to-[#0F6D6D] px-5 py-8 flex flex-col items-center justify-center gap-3">
+              <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+                <PlayCircle size={36} className="text-white" />
+              </div>
+              <p className="text-white/80 text-xs font-medium">Tap to watch</p>
+            </div>
+          )}
           <div className="px-4 py-3">
             <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${video.tagColour}`}>
               {video.tag}
@@ -119,17 +142,30 @@ function VideoCard({ video }: { video: VideoItem }) {
         </button>
       ) : (
         <div>
-          {/* 16:9 iframe */}
-          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-            <iframe
-              src={video.embedUrl}
-              title={video.title}
-              allow="autoplay; fullscreen"
-              allowFullScreen
-              className="absolute inset-0 w-full h-full border-0"
-            />
-          </div>
-          {/* Info bar below player */}
+          {video.videoUrl ? (
+            <video
+              controls
+              autoPlay
+              playsInline
+              poster={video.thumbnailUrl}
+              className="w-full"
+            >
+              <source src={video.videoUrl} type="video/mp4" />
+              {video.captionUrl && (
+                <track kind="subtitles" src={video.captionUrl} srcLang="en" label="English" default />
+              )}
+            </video>
+          ) : (
+            <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+              <iframe
+                src={video.embedUrl}
+                title={video.title}
+                allow="autoplay; fullscreen"
+                allowFullScreen
+                className="absolute inset-0 w-full h-full border-0"
+              />
+            </div>
+          )}
           <div className="px-4 py-3 flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${video.tagColour}`}>
