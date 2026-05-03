@@ -42,9 +42,21 @@ const MESSAGE_TEMPLATES = [
     priority: 'important' as PatientMessagePriority,
   },
   {
-    label: 'Contact clinic',
-    subject: 'Please contact the clinic',
-    body: 'Please contact the clinic when you can so we can discuss your current plan.',
+    label: 'Nausea advice',
+    subject: 'Managing nausea on your medication',
+    body: 'I can see you\'ve been experiencing nausea. This is common in the first few weeks. Tips that can help:\n\n• Eat smaller, more frequent meals\n• Avoid fatty or spicy foods\n• Try taking your injection in the evening\n• Stay well hydrated with small, frequent sips\n\nNausea usually improves significantly after 4–8 weeks. Please contact us if it is severe or you cannot keep fluids down.',
+    priority: 'normal' as PatientMessagePriority,
+  },
+  {
+    label: 'Missed dose',
+    subject: 'Advice about your missed dose',
+    body: 'If you missed your weekly injection and it has been fewer than 5 days, take it as soon as you remember and continue on your usual day next week.\n\nIf it has been 5 or more days, skip the missed dose and resume on your usual day.\n\nDo not take two doses at once. If you are unsure, please contact the clinic.',
+    priority: 'normal' as PatientMessagePriority,
+  },
+  {
+    label: 'Contact clinic urgently',
+    subject: 'Please contact the clinic today',
+    body: 'Please contact the clinic today so we can discuss your current symptoms or concerns. If you are seriously unwell, call 000 or attend your nearest emergency department.',
     priority: 'urgent' as PatientMessagePriority,
   },
 ];
@@ -361,13 +373,13 @@ export function ClinicianPatientDetail() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {MESSAGE_TEMPLATES.map(template => (
               <button
                 key={template.label}
                 type="button"
                 onClick={() => applyMessageTemplate(template)}
-                className="rounded-xl border border-[#E7E5E1] bg-[#F6F3EE] px-3 py-2 text-left text-xs font-semibold text-[#3C4346]"
+                className="rounded-xl border border-[#E7E5E1] bg-[#F6F3EE] px-3 py-2 text-left text-xs font-semibold text-[#3C4346] leading-tight"
               >
                 {template.label}
               </button>
@@ -448,7 +460,12 @@ export function ClinicianPatientDetail() {
                       </span>
                     </div>
                     <p className="text-xs text-[#747B7D] mt-1">
-                      {formatDate(message.createdAt.split('T')[0])} - {message.status}
+                      Sent {formatDate(message.createdAt.split('T')[0])}
+                    </p>
+                    <p className={`text-xs mt-0.5 font-medium ${message.readAt ? 'text-[#0F6D6D]' : 'text-[#747B7D]'}`}>
+                      {message.readAt
+                        ? `✓ Read by patient ${formatDate(message.readAt.split('T')[0])}`
+                        : 'Not yet read'}
                     </p>
                   </div>
                 ))}

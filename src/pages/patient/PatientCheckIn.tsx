@@ -4,7 +4,7 @@ import { AppShell } from '../../components/AppShell';
 import { SafetyAlert } from '../../components/SafetyAlert';
 import { usePatientData } from '../../hooks/usePatientData';
 import type { SideEffect, ExerciseLevel, AlcoholIntake } from '../../types';
-import { Check } from 'lucide-react';
+import { Check, ChevronLeft } from 'lucide-react';
 
 const sideEffectOptions: SideEffect[] = [
   'none', 'nausea', 'vomiting', 'constipation', 'diarrhoea',
@@ -27,6 +27,24 @@ const alcoholOptions: { value: AlcoholIntake; label: string }[] = [
   { value: 'moderate', label: 'Moderate' },
   { value: 'high', label: 'High' },
 ];
+
+const STEPS = ['Weight', 'Wellbeing', 'Lifestyle', 'Side Effects', 'Notes'];
+
+function StepProgress({ step }: { step: number }) {
+  return (
+    <div className="flex items-center gap-2.5">
+      <div className="flex gap-1.5 flex-1">
+        {STEPS.map((_, i) => (
+          <div
+            key={i}
+            className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${i <= step ? 'bg-[#1B3D34]' : 'bg-[#E7E5E1]'}`}
+          />
+        ))}
+      </div>
+      <span className="text-xs text-[#747B7D] font-medium whitespace-nowrap">{step + 1} / {STEPS.length}</span>
+    </div>
+  );
+}
 
 function ScoreSlider({ label, value, onChange, help }: { label: string; value: number; onChange: (v: number) => void; help?: string }) {
   const colour = value <= 3 ? '#d64045' : value <= 6 ? '#8A4D3C' : '#1B3D34';
@@ -55,6 +73,7 @@ export function PatientCheckIn() {
   const { saveCheckIn, patient } = usePatientData();
   const today = new Date().toISOString().split('T')[0];
 
+  const [step, setStep] = useState(0);
   const [form, setForm] = useState({
     weightKg: '',
     waistCm: '',
@@ -69,8 +88,8 @@ export function PatientCheckIn() {
     sideEffects: ['none'] as SideEffect[],
     notes: '',
   });
-
   const [submitted, setSubmitted] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const toggleSideEffect = (effect: SideEffect) => {
     setForm(f => {
@@ -79,7 +98,7 @@ export function PatientCheckIn() {
       return {
         ...f,
         sideEffects: without.includes(effect)
-          ? without.filter(e => e !== effect) || ['none']
+          ? without.filter(e => e !== effect).length ? without.filter(e => e !== effect) : ['none']
           : [...without, effect],
       };
     });
@@ -88,8 +107,15 @@ export function PatientCheckIn() {
   const hasRedFlag = form.sideEffects.some(e => RED_FLAG_EFFECTS.includes(e));
   const showRedFlag = hasRedFlag && !form.sideEffects.includes('none');
 
+  const handleNext = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
+  const handleBack = () => {
+    if (step === 0) navigate('/patient/home');
+    else setStep(s => s - 1);
+  };
+
   const handleSubmit = async () => {
     if (!form.weightKg) return;
+    setSaving(true);
     await saveCheckIn({
       patientId: patient?.id ?? '',
       date: today,
@@ -107,6 +133,7 @@ export function PatientCheckIn() {
       notes: form.notes,
       redFlag: showRedFlag,
     });
+    setSaving(false);
     setSubmitted(true);
   };
 
@@ -134,7 +161,7 @@ export function PatientCheckIn() {
             className="mt-6 bg-[#1B3D34] text-white rounded-2xl px-8 py-4 text-base font-semibold w-full">
             Return to Dashboard
           </button>
-          <button onClick={() => { setSubmitted(false); setForm(f => ({ ...f, weightKg: '' })); }}
+          <button onClick={() => { setSubmitted(false); setStep(0); setForm(f => ({ ...f, weightKg: '' })); }}
             className="mt-2 text-sm text-[#3C4346] underline">
             Log another entry
           </button>
@@ -145,131 +172,174 @@ export function PatientCheckIn() {
 
   return (
     <AppShell role="patient" title="Daily Check-in">
-      <div className="space-y-6">
-        {/* Date */}
-        <div className="bg-[#1B3D34]/10 rounded-2xl px-4 py-3">
-          <p className="text-sm font-semibold text-[#1B3D34]">
-            Today: {new Date().toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
-        </div>
-
-        {/* Weight */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-4 shadow-sm">
-          <h3 className="font-semibold text-[#1B3D34]">Weight & Measurements</h3>
-          <div>
-            <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">
-              Today's Weight (kg) *
-            </label>
-            <input type="number" step="0.1" className={inputClass} value={form.weightKg}
-              onChange={e => setForm(f => ({ ...f, weightKg: e.target.value }))}
-              placeholder="e.g. 89.5" required />
+      <div className="space-y-5">
+        {/* Progress */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <button onClick={handleBack} className="p-1 -ml-1 text-[#3C4346]">
+              <ChevronLeft size={20} />
+            </button>
+            <h2 className="text-base font-bold text-[#1B3D34] flex-1">{STEPS[step]}</h2>
+            <span className="text-xs text-[#747B7D]">
+              {new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'short' })}
+            </span>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">
-              Waist Circumference (cm) — optional
-            </label>
-            <input type="number" step="0.5" className={inputClass} value={form.waistCm}
-              onChange={e => setForm(f => ({ ...f, waistCm: e.target.value }))}
-              placeholder="e.g. 92" />
-          </div>
+          <StepProgress step={step} />
         </div>
 
-        {/* Wellbeing scores */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-5 shadow-sm">
-          <h3 className="font-semibold text-[#1B3D34]">Wellbeing Scores</h3>
-          <ScoreSlider label="Appetite" value={form.appetiteScore} onChange={v => setForm(f => ({ ...f, appetiteScore: v }))}
-            help="1 = no appetite, 10 = strong appetite" />
-          <ScoreSlider label="Energy" value={form.energyScore} onChange={v => setForm(f => ({ ...f, energyScore: v }))}
-            help="1 = exhausted, 10 = very energetic" />
-          <ScoreSlider label="Mood" value={form.moodScore} onChange={v => setForm(f => ({ ...f, moodScore: v }))}
-            help="1 = very low mood, 10 = excellent mood" />
-          <ScoreSlider label="Sleep Quality" value={form.sleepScore} onChange={v => setForm(f => ({ ...f, sleepScore: v }))}
-            help="1 = very poor, 10 = excellent" />
-        </div>
-
-        {/* Activity */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-4 shadow-sm">
-          <h3 className="font-semibold text-[#1B3D34]">Activity & Lifestyle</h3>
-          <div>
-            <label className="block text-xs font-semibold text-[#3C4346] mb-2 uppercase tracking-wide">Exercise Today</label>
-            <div className="grid grid-cols-4 gap-2">
-              {exerciseOptions.map(({ value, label }) => (
-                <button key={value} onClick={() => setForm(f => ({ ...f, exerciseLevel: value }))}
-                  className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${form.exerciseLevel === value ? 'bg-[#1B3D34] text-white border-[#1B3D34]' : 'bg-white text-[#3C4346] border-[#E7E5E1]'}`}>
-                  {label}
-                </button>
-              ))}
+        {/* Step 0: Weight & Measurements */}
+        {step === 0 && (
+          <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-4 shadow-sm">
+            <p className="text-sm text-[#747B7D]">Weigh yourself first thing in the morning after using the bathroom, before eating or drinking.</p>
+            <div>
+              <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">
+                Today's Weight (kg) *
+              </label>
+              <input
+                type="number" step="0.1" inputMode="decimal" className={inputClass} value={form.weightKg}
+                onChange={e => setForm(f => ({ ...f, weightKg: e.target.value }))}
+                placeholder="e.g. 89.5" autoFocus
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">
+                Waist Circumference (cm) — optional
+              </label>
+              <input
+                type="number" step="0.5" inputMode="decimal" className={inputClass} value={form.waistCm}
+                onChange={e => setForm(f => ({ ...f, waistCm: e.target.value }))}
+                placeholder="e.g. 92"
+              />
+              <p className="text-xs text-[#747B7D] mt-1">Measure at the narrowest point, at the end of a gentle exhale.</p>
             </div>
           </div>
-          <div>
-            <label className="block text-xs font-semibold text-[#3C4346] mb-2 uppercase tracking-wide">Alcohol Intake</label>
-            <div className="grid grid-cols-4 gap-2">
-              {alcoholOptions.map(({ value, label }) => (
-                <button key={value} onClick={() => setForm(f => ({ ...f, alcoholIntake: value }))}
-                  className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${form.alcoholIntake === value ? 'bg-[#0F6D6D] text-white border-[#0F6D6D]' : 'bg-white text-[#3C4346] border-[#E7E5E1]'}`}>
-                  {label}
-                </button>
-              ))}
+        )}
+
+        {/* Step 1: Wellbeing Scores */}
+        {step === 1 && (
+          <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-5 shadow-sm">
+            <p className="text-sm text-[#747B7D]">Rate how you've been feeling over the past week.</p>
+            <ScoreSlider label="Appetite" value={form.appetiteScore} onChange={v => setForm(f => ({ ...f, appetiteScore: v }))}
+              help="1 = no appetite, 10 = strong appetite" />
+            <ScoreSlider label="Energy" value={form.energyScore} onChange={v => setForm(f => ({ ...f, energyScore: v }))}
+              help="1 = exhausted, 10 = very energetic" />
+            <ScoreSlider label="Mood" value={form.moodScore} onChange={v => setForm(f => ({ ...f, moodScore: v }))}
+              help="1 = very low mood, 10 = excellent mood" />
+            <ScoreSlider label="Sleep Quality" value={form.sleepScore} onChange={v => setForm(f => ({ ...f, sleepScore: v }))}
+              help="1 = very poor, 10 = excellent" />
+          </div>
+        )}
+
+        {/* Step 2: Activity & Lifestyle */}
+        {step === 2 && (
+          <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-4 shadow-sm">
+            <div>
+              <label className="block text-xs font-semibold text-[#3C4346] mb-2 uppercase tracking-wide">Exercise Today</label>
+              <div className="grid grid-cols-4 gap-2">
+                {exerciseOptions.map(({ value, label }) => (
+                  <button key={value} onClick={() => setForm(f => ({ ...f, exerciseLevel: value }))}
+                    className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${form.exerciseLevel === value ? 'bg-[#1B3D34] text-white border-[#1B3D34]' : 'bg-white text-[#3C4346] border-[#E7E5E1]'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#3C4346] mb-2 uppercase tracking-wide">Alcohol Intake</label>
+              <div className="grid grid-cols-4 gap-2">
+                {alcoholOptions.map(({ value, label }) => (
+                  <button key={value} onClick={() => setForm(f => ({ ...f, alcoholIntake: value }))}
+                    className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${form.alcoholIntake === value ? 'bg-[#0F6D6D] text-white border-[#0F6D6D]' : 'bg-white text-[#3C4346] border-[#E7E5E1]'}`}>
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${form.proteinFocus ? 'bg-[#0F6D6D]/10 border-[#0F6D6D]/30' : 'bg-white border-[#E7E5E1]'}`}>
+                <input type="checkbox" className="w-5 h-5 accent-[#1B3D34]" checked={form.proteinFocus}
+                  onChange={e => setForm(f => ({ ...f, proteinFocus: e.target.checked }))} />
+                <span className="text-sm font-medium text-[#1B3D34]">Protein focus today</span>
+              </label>
+              <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${form.waterFocus ? 'bg-[#0F6D6D]/10 border-[#0F6D6D]/30' : 'bg-white border-[#E7E5E1]'}`}>
+                <input type="checkbox" className="w-5 h-5 accent-[#0F6D6D]" checked={form.waterFocus}
+                  onChange={e => setForm(f => ({ ...f, waterFocus: e.target.checked }))} />
+                <span className="text-sm font-medium text-[#1B3D34]">Water intake focus</span>
+              </label>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${form.proteinFocus ? 'bg-[#0F6D6D]/10 border-[#0F6D6D]/30' : 'bg-white border-[#E7E5E1]'}`}>
-              <input type="checkbox" className="w-5 h-5 accent-[#1B3D34]" checked={form.proteinFocus}
-                onChange={e => setForm(f => ({ ...f, proteinFocus: e.target.checked }))} />
-              <span className="text-sm font-medium text-[#1B3D34]">Protein focus today</span>
-            </label>
-            <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${form.waterFocus ? 'bg-[#0F6D6D]/10 border-[#0F6D6D]/30' : 'bg-white border-[#E7E5E1]'}`}>
-              <input type="checkbox" className="w-5 h-5 accent-[#0F6D6D]" checked={form.waterFocus}
-                onChange={e => setForm(f => ({ ...f, waterFocus: e.target.checked }))} />
-              <span className="text-sm font-medium text-[#1B3D34]">Water intake focus</span>
-            </label>
-          </div>
-        </div>
+        )}
 
-        {/* Side effects */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-3 shadow-sm">
-          <h3 className="font-semibold text-[#1B3D34]">Side Effects Today</h3>
-          <div className="flex flex-wrap gap-2">
-            {sideEffectOptions.map(effect => {
-              const selected = form.sideEffects.includes(effect);
-              const isRed = RED_FLAG_EFFECTS.includes(effect);
-              return (
-                <button key={effect} onClick={() => toggleSideEffect(effect)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold border capitalize transition-all ${
-                    selected
-                      ? isRed ? 'bg-red-500 text-white border-red-500'
-                      : 'bg-[#1B3D34] text-white border-[#1B3D34]'
-                      : 'bg-white text-[#3C4346] border-[#E7E5E1]'
-                  }`}>
-                  {effect}
-                </button>
-              );
-            })}
+        {/* Step 3: Side Effects */}
+        {step === 3 && (
+          <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-3 shadow-sm">
+            <p className="text-sm text-[#747B7D]">Tap any side effects you've experienced since your last dose. Select "None" if you feel fine.</p>
+            <div className="flex flex-wrap gap-2">
+              {sideEffectOptions.map(effect => {
+                const selected = form.sideEffects.includes(effect);
+                const isRed = RED_FLAG_EFFECTS.includes(effect);
+                return (
+                  <button key={effect} onClick={() => toggleSideEffect(effect)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold border capitalize transition-all ${
+                      selected
+                        ? isRed ? 'bg-red-500 text-white border-red-500'
+                        : 'bg-[#1B3D34] text-white border-[#1B3D34]'
+                        : 'bg-white text-[#3C4346] border-[#E7E5E1]'
+                    }`}>
+                    {effect}
+                  </button>
+                );
+              })}
+            </div>
+            {showRedFlag && (
+              <SafetyAlert
+                type="red-flag"
+                message="If you are seriously unwell, call 000 or attend your nearest emergency department. For non-urgent concerns, contact your GP."
+                showEmergency
+              />
+            )}
           </div>
-          {showRedFlag && (
-            <SafetyAlert
-              type="red-flag"
-              message="If you are seriously unwell, call 000 or attend your nearest emergency department. For non-urgent concerns, contact your GP."
-              showEmergency
-            />
+        )}
+
+        {/* Step 4: Notes */}
+        {step === 4 && (
+          <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 shadow-sm space-y-4">
+            <p className="text-sm text-[#747B7D]">Anything you'd like Dr. Hewage to know at your next review? This is optional.</p>
+            <textarea className={inputClass + ' resize-none'} rows={4} value={form.notes}
+              onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
+              placeholder="e.g. I've been struggling with portion sizes this week, or I had a good week with my meals..." />
+
+            {/* Summary before submit */}
+            <div className="bg-[#F6F3EE] rounded-xl border border-[#E7E5E1] p-4 space-y-1.5 text-xs text-[#3C4346]">
+              <p className="font-semibold text-[#1B3D34] mb-2">Check-in summary</p>
+              <p>Weight: <strong>{form.weightKg} kg</strong>{form.waistCm && ` · Waist: ${form.waistCm} cm`}</p>
+              <p>Appetite {form.appetiteScore}/10 · Energy {form.energyScore}/10 · Mood {form.moodScore}/10 · Sleep {form.sleepScore}/10</p>
+              <p>Exercise: {form.exerciseLevel} · Alcohol: {form.alcoholIntake}</p>
+              <p>Side effects: {form.sideEffects.join(', ')}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation */}
+        <div className="flex gap-3">
+          {step < STEPS.length - 1 ? (
+            <button
+              onClick={handleNext}
+              disabled={step === 0 && !form.weightKg}
+              className="flex-1 bg-[#1B3D34] text-white rounded-2xl py-4 text-base font-bold disabled:opacity-40 shadow-md"
+            >
+              Next →
+            </button>
+          ) : (
+            <button
+              onClick={handleSubmit}
+              disabled={!form.weightKg || saving}
+              className="flex-1 bg-[#1B3D34] text-white rounded-2xl py-4 text-base font-bold disabled:opacity-40 shadow-md"
+            >
+              {saving ? 'Saving…' : 'Save Check-in'}
+            </button>
           )}
         </div>
-
-        {/* Notes */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 shadow-sm">
-          <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Notes (optional)</label>
-          <textarea className={inputClass + ' resize-none'} rows={3} value={form.notes}
-            onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-            placeholder="Anything else you'd like to note for your GP review..." />
-        </div>
-
-        <button
-          onClick={handleSubmit}
-          disabled={!form.weightKg}
-          className="w-full bg-[#1B3D34] text-white rounded-2xl px-5 py-4 text-base font-semibold disabled:opacity-40 disabled:cursor-not-allowed shadow-md"
-        >
-          Save Today's Check-in
-        </button>
       </div>
     </AppShell>
   );

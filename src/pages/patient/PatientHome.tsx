@@ -6,12 +6,14 @@ import { ReminderCard } from '../../components/ReminderCard';
 import { SafetyAlert } from '../../components/SafetyAlert';
 import { InstallAppBanner } from '../../components/InstallAppBanner';
 import { usePatientData } from '../../hooks/usePatientData';
+import { usePatientMessages } from '../../hooks/usePatientMessages';
 import { weightChange, percentBodyWeightChange, daysUntil, formatDate, latestCheckIn } from '../../utils';
-import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles, CheckCircle2 } from 'lucide-react';
+import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles, CheckCircle2, Mail } from 'lucide-react';
 import { APP_CONFIG } from '../../config';
 
 export function PatientHome() {
   const { patient, checkIns, medications, reminders, loading, updateReminderStatus, updateMedication } = usePatientData();
+  const { unreadCount } = usePatientMessages();
 
   const medication = medications[0];
   const latest = patient ? latestCheckIn(checkIns, patient.id) : undefined;
@@ -75,6 +77,27 @@ export function PatientHome() {
             {latest ? `Last logged: ${formatDate(latest.date)}` : 'Start your first check-in today'}
           </p>
         </div>
+
+        {/* Unread messages banner */}
+        {unreadCount > 0 && (
+          <Link
+            to="/patient/messages"
+            className="flex items-center gap-3 bg-[#B8735E] text-white rounded-2xl px-5 py-3.5 shadow-md"
+          >
+            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
+              <Mail size={16} className="text-white" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-bold leading-tight">
+                {unreadCount === 1 ? '1 new message from Dr. Hewage' : `${unreadCount} new messages from Dr. Hewage`}
+              </p>
+              <p className="text-xs text-white/75 mt-0.5">Tap to read</p>
+            </div>
+            <span className="bg-white text-[#B8735E] text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center flex-shrink-0">
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </span>
+          </Link>
+        )}
 
         {/* Today's check-in CTA — dominant action */}
         {todayDone ? (

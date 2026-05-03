@@ -67,13 +67,20 @@ function MessageCard({
       {isOpen && (
         <div className="px-4 pb-4 border-t border-[#E7E5E1]">
           <p className="text-sm text-[#3C4346] leading-relaxed whitespace-pre-line pt-4">{message.body}</p>
-          <button
-            onClick={onArchive}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl border border-[#E7E5E1] bg-[#F6F3EE] px-3 py-2 text-xs font-semibold text-[#3C4346]"
-          >
-            <Archive size={13} />
-            Archive
-          </button>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <button
+              onClick={onArchive}
+              className="inline-flex items-center gap-2 rounded-xl border border-[#E7E5E1] bg-[#F6F3EE] px-3 py-2 text-xs font-semibold text-[#3C4346]"
+            >
+              <Archive size={13} />
+              Archive
+            </button>
+            {message.readAt && (
+              <p className="text-[10px] text-[#747B7D]">
+                Read {formatMessageDate(message.readAt)}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
