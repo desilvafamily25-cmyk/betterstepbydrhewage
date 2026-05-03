@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { AppShell, PatientMoreLinks } from '../../components/AppShell';
 import { StatCard } from '../../components/StatCard';
-import { MedicationCard } from '../../components/MedicationCard';
+import { MedicationDoseCard } from '../../components/MedicationDoseCard';
 import { ReminderCard } from '../../components/ReminderCard';
 import { SafetyAlert } from '../../components/SafetyAlert';
 import { InstallAppBanner } from '../../components/InstallAppBanner';
@@ -11,13 +11,19 @@ import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles } from 'l
 import { APP_CONFIG } from '../../config';
 
 export function PatientHome() {
-  const { patient, checkIns, medications, reminders, loading, updateReminderStatus } = usePatientData();
+  const { patient, checkIns, medications, reminders, loading, updateReminderStatus, updateMedication } = usePatientData();
 
   const medication = medications[0];
   const latest = patient ? latestCheckIn(checkIns, patient.id) : undefined;
   const patientReminders = reminders.filter(r => r.status === 'pending');
 
   const handleAcknowledge = (id: string) => updateReminderStatus(id, 'acknowledged');
+
+  const handleLogDose = async (id: string, nextDoseDate: string, medicationDay: string) => {
+    const med = medications.find(m => m.id === id);
+    if (!med) return;
+    await updateMedication(id, { ...med, nextDoseDate, medicationDay });
+  };
 
   if (loading) {
     return (
@@ -100,6 +106,14 @@ export function PatientHome() {
           />
         </div>
 
+        {/* Current medication — interactive dose card */}
+        {medication && (
+          <div>
+            <h3 className="text-sm font-semibold text-[#3C4346] mb-3 uppercase tracking-wide">Current Medication</h3>
+            <MedicationDoseCard medication={medication} onLogDose={handleLogDose} />
+          </div>
+        )}
+
         {/* Motivational card */}
         <div className="bg-[#DCC9B0]/35 border border-[#DCC9B0] rounded-2xl p-4 flex gap-3">
           <Sparkles size={20} className="text-[#B8735E] flex-shrink-0 mt-0.5" />
@@ -128,14 +142,6 @@ export function PatientHome() {
           <h3 className="text-sm font-semibold text-[#3C4346] mb-2 uppercase tracking-wide">More</h3>
           <PatientMoreLinks />
         </div>
-
-        {/* Current medication */}
-        {medication && (
-          <div>
-            <h3 className="text-sm font-semibold text-[#3C4346] mb-3 uppercase tracking-wide">Current Medication</h3>
-            <MedicationCard medication={medication} compact />
-          </div>
-        )}
 
         {/* Reminders */}
         {patientReminders.length > 0 && (
