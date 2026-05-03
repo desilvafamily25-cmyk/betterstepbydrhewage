@@ -5,7 +5,7 @@ import { signOut } from '../hooks/useAuth';
 import { usePatientMessages } from '../hooks/usePatientMessages';
 import clsx from 'clsx';
 import {
-  Home, ClipboardList, TrendingUp, Pill, Bell, BookOpen,
+  Home, ClipboardList, TrendingUp, Pill, BookOpen,
   FileText, Calendar, Users, Flag, FileCheck, Settings, ChevronLeft, LogOut, Mail, Calculator,
 } from 'lucide-react';
 
@@ -17,23 +17,24 @@ interface AppShellProps {
 }
 
 const patientNav = [
-  { to: '/patient/home', icon: Home, label: 'Home' },
-  { to: '/patient/check-in', icon: ClipboardList, label: 'Log' },
-  { to: '/patient/progress', icon: TrendingUp, label: 'Progress' },
-  { to: '/patient/medication', icon: Pill, label: 'Medication' },
-  { to: '/patient/reminders', icon: Bell, label: 'Reminders' },
+  { to: '/patient/home',      icon: Home,          label: 'Home' },
+  { to: '/patient/check-in',  icon: ClipboardList, label: 'Log' },
+  { to: '/patient/medication', icon: Pill,          label: 'Medication' },
+  { to: '/patient/progress',  icon: TrendingUp,    label: 'Progress' },
+  { to: '/patient/messages',  icon: Mail,          label: 'Messages' },
 ];
 
 const clinicianNav = [
-  { to: '/clinician/dashboard', icon: Users, label: 'Patients' },
-  { to: '/clinician/flags', icon: Flag, label: 'Flags' },
+  { to: '/clinician/dashboard', icon: Users,     label: 'Patients' },
+  { to: '/clinician/flags',     icon: Flag,      label: 'Flags' },
   { to: '/clinician/templates', icon: FileCheck, label: 'Notes' },
-  { to: '/clinician/settings', icon: Settings, label: 'Settings' },
+  { to: '/clinician/settings',  icon: Settings,  label: 'Settings' },
 ];
 
 export function AppShell({ role, children, title, showBack }: AppShellProps) {
   const location = useLocation();
   const nav = role === 'patient' ? patientNav : clinicianNav;
+  const { unreadCount } = usePatientMessages();
 
   return (
     <div className="flex flex-col min-h-dvh bg-[#F6F3EE]">
@@ -57,7 +58,7 @@ export function AppShell({ role, children, title, showBack }: AppShellProps) {
                 />
                 <div className="min-w-0">
                   <p className="font-['Playfair_Display'] text-lg font-bold leading-none text-[#123B34]">BetterStep</p>
-                  <p className="text-xs font-semibold leading-tight text-[#B8735E]">by Dr. Hewage</p>
+                  <p className="text-[11px] font-semibold leading-tight text-[#B8735E]">Supervised by {APP_CONFIG.doctorName}</p>
                 </div>
               </div>
             )}
@@ -89,19 +90,34 @@ export function AppShell({ role, children, title, showBack }: AppShellProps) {
         <div className="max-w-2xl mx-auto px-2 flex justify-around">
           {nav.map(({ to, icon: Icon, label }) => {
             const active = location.pathname === to || location.pathname.startsWith(to + '/');
+            const isMessages = to === '/patient/messages';
+            const badge = isMessages && unreadCount > 0 ? unreadCount : 0;
             return (
               <Link
                 key={to}
                 to={to}
                 className={clsx(
-                  'flex flex-col items-center gap-0.5 py-2 px-3 min-w-[56px] rounded-xl transition-all',
+                  'relative flex flex-col items-center gap-0.5 py-2 px-3 min-w-[56px] rounded-xl transition-all',
                   active ? 'text-[#1B3D34]' : 'text-[#747B7D]'
                 )}
               >
-                <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
-                <span className={clsx('text-[10px] font-medium', active ? 'font-semibold' : '')}>
+                <div className={clsx(
+                  'w-9 h-9 rounded-xl flex items-center justify-center transition-all',
+                  active ? 'bg-[#1B3D34]/10' : ''
+                )}>
+                  <Icon size={20} strokeWidth={active ? 2.5 : 1.8} />
+                </div>
+                <span className={clsx('text-[10px]', active ? 'font-bold text-[#1B3D34]' : 'font-medium')}>
                   {label}
                 </span>
+                {badge > 0 && (
+                  <span className="absolute top-1.5 right-2 flex h-4 w-4 items-center justify-center">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d64045] opacity-60" />
+                    <span className="relative inline-flex rounded-full h-4 w-4 bg-[#d64045] text-white text-[9px] font-bold items-center justify-center">
+                      {badge > 9 ? '9+' : badge}
+                    </span>
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -111,47 +127,31 @@ export function AppShell({ role, children, title, showBack }: AppShellProps) {
   );
 }
 
-// Extra nav links for patient (shown in page or header)
+// Extra nav links for patient (shown on home page)
 export function PatientMoreLinks() {
   const location = useLocation();
-  const { unreadCount } = usePatientMessages();
-  const hasUnread = unreadCount > 0;
 
   const extras = [
-    { to: '/patient/messages', icon: Mail, label: 'Messages' },
-    { to: '/patient/tools', icon: Calculator, label: 'Tools' },
-    { to: '/patient/education', icon: BookOpen, label: 'Education' },
-    { to: '/patient/review-summary', icon: FileText, label: 'Summary' },
-    { to: '/patient/book-review', icon: Calendar, label: 'Book' },
+    { to: '/patient/tools',          icon: Calculator, label: 'Tools' },
+    { to: '/patient/education',      icon: BookOpen,   label: 'Education' },
+    { to: '/patient/review-summary', icon: FileText,   label: 'Summary' },
+    { to: '/patient/book-review',    icon: Calendar,   label: 'Book' },
   ];
 
   return (
     <div className="flex gap-2 flex-wrap">
       {extras.map(({ to, icon: Icon, label }) => {
         const active = location.pathname === to;
-        const isMessages = to === '/patient/messages';
-        const highlight = isMessages && hasUnread && !active;
-
         return (
           <Link key={to} to={to}
             className={clsx(
-              'relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all',
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all',
               active
                 ? 'bg-[#1B3D34] text-white border-[#1B3D34]'
-                : highlight
-                ? 'bg-[#B8735E] text-white border-[#B8735E] shadow-md'
                 : 'bg-white text-[#3C4346] border-[#E7E5E1] hover:border-[#1B3D34] hover:text-[#1B3D34]'
             )}>
             <Icon size={14} />
             {label}
-            {highlight && (
-              <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d64045] opacity-75" />
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#d64045] text-white text-[8px] font-bold items-center justify-center">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              </span>
-            )}
           </Link>
         );
       })}

@@ -42,6 +42,10 @@ export function PatientHome() {
   const todayStr = new Date().toISOString().split('T')[0];
   const todayDone = latest?.date === todayStr;
 
+  const programmeWeek = medication?.startDate
+    ? Math.max(1, Math.floor((new Date(todayStr).getTime() - new Date(medication.startDate).getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1)
+    : null;
+
   const change = weightChange(patient.startingWeightKg, patient.currentWeightKg);
   const pct = percentBodyWeightChange(patient.startingWeightKg, patient.currentWeightKg);
   const daysToReview = daysUntil(patient.nextReviewDate);
@@ -76,6 +80,9 @@ export function PatientHome() {
           <p className="text-white/80 text-sm mt-1">
             {latest ? `Last logged: ${formatDate(latest.date)}` : 'Start your first check-in today'}
           </p>
+          {programmeWeek && medication && (
+            <p className="text-white/60 text-xs mt-1.5 font-medium">Week {programmeWeek} · {medication.name} {medication.dose}</p>
+          )}
         </div>
 
         {/* Unread messages banner */}

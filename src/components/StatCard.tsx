@@ -30,7 +30,7 @@ export function StatCard({ label, value, unit, subtext, icon, colour = 'neutral'
         {icon && <span className="opacity-60">{icon}</span>}
       </div>
       <div className="flex items-end gap-1">
-        <span className={clsx('font-bold leading-none', large ? 'text-3xl' : 'text-2xl')}>{value}</span>
+        <span className={clsx('font-bold leading-none font-mono-nums', large ? 'text-3xl' : 'text-2xl')}>{value}</span>
         {unit && <span className="text-sm opacity-70 mb-0.5">{unit}</span>}
       </div>
       {subtext && <span className="text-xs opacity-60">{subtext}</span>}

@@ -28,6 +28,19 @@ const alcoholOptions: { value: AlcoholIntake; label: string }[] = [
   { value: 'high', label: 'High' },
 ];
 
+const WELLBEING_OPTIONS = [
+  { label: 'Great', value: 9 },
+  { label: 'Good', value: 7 },
+  { label: 'Okay', value: 5 },
+  { label: 'Rough', value: 3 },
+];
+
+const SEVERITY_OPTIONS = [
+  { label: 'Mild', value: 'mild' },
+  { label: 'Moderate', value: 'moderate' },
+  { label: 'Severe', value: 'severe' },
+];
+
 const STEPS = ['Weight', 'Wellbeing', 'Lifestyle', 'Side Effects', 'Notes'];
 
 function StepProgress({ step }: { step: number }) {
@@ -46,23 +59,21 @@ function StepProgress({ step }: { step: number }) {
   );
 }
 
-function ScoreSlider({ label, value, onChange, help }: { label: string; value: number; onChange: (v: number) => void; help?: string }) {
-  const colour = value <= 3 ? '#d64045' : value <= 6 ? '#8A4D3C' : '#1B3D34';
+function WellbeingChips({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <label className="text-sm font-medium text-[#1B3D34]">{label}</label>
-        <span className="text-sm font-bold" style={{ color: colour }}>{value} / 10</span>
-      </div>
-      {help && <p className="text-xs text-[#747B7D] mb-2">{help}</p>}
-      <input
-        type="range" min={1} max={10} value={value}
-        onChange={e => onChange(Number(e.target.value))}
-        className="w-full"
-        style={{ accentColor: colour }}
-      />
-      <div className="flex justify-between text-[10px] text-[#747B7D] mt-1">
-        <span>Low</span><span>Moderate</span><span>High</span>
+      <p className="text-sm font-medium text-[#1B3D34] mb-2">{label}</p>
+      <div className="grid grid-cols-4 gap-2">
+        {WELLBEING_OPTIONS.map(opt => (
+          <button key={opt.label} type="button" onClick={() => onChange(opt.value)}
+            className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${
+              value === opt.value
+                ? 'bg-[#1B3D34] text-white border-[#1B3D34]'
+                : 'bg-white text-[#3C4346] border-[#E7E5E1]'
+            }`}>
+            {opt.label}
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -86,6 +97,7 @@ export function PatientCheckIn() {
     proteinFocus: false,
     waterFocus: false,
     sideEffects: ['none'] as SideEffect[],
+    severity: '' as '' | 'mild' | 'moderate' | 'severe',
     notes: '',
   });
   const [submitted, setSubmitted] = useState(false);
@@ -93,7 +105,7 @@ export function PatientCheckIn() {
 
   const toggleSideEffect = (effect: SideEffect) => {
     setForm(f => {
-      if (effect === 'none') return { ...f, sideEffects: ['none'] };
+      if (effect === 'none') return { ...f, sideEffects: ['none'], severity: '' };
       const without = f.sideEffects.filter(e => e !== 'none');
       return {
         ...f,
@@ -104,8 +116,9 @@ export function PatientCheckIn() {
     });
   };
 
+  const hasActiveSideEffects = !form.sideEffects.includes('none') && form.sideEffects.length > 0;
   const hasRedFlag = form.sideEffects.some(e => RED_FLAG_EFFECTS.includes(e));
-  const showRedFlag = hasRedFlag && !form.sideEffects.includes('none');
+  const showRedFlag = (hasRedFlag && hasActiveSideEffects) || form.severity === 'severe';
 
   const handleNext = () => setStep(s => Math.min(s + 1, STEPS.length - 1));
   const handleBack = () => {
@@ -116,6 +129,9 @@ export function PatientCheckIn() {
   const handleSubmit = async () => {
     if (!form.weightKg) return;
     setSaving(true);
+    const notesWithSeverity = hasActiveSideEffects && form.severity
+      ? `[${form.severity.charAt(0).toUpperCase() + form.severity.slice(1)} side effects] ${form.notes}`.trim()
+      : form.notes;
     await saveCheckIn({
       patientId: patient?.id ?? '',
       date: today,
@@ -130,7 +146,7 @@ export function PatientCheckIn() {
       proteinFocus: form.proteinFocus,
       waterFocus: form.waterFocus,
       sideEffects: form.sideEffects.length ? form.sideEffects : ['none'],
-      notes: form.notes,
+      notes: notesWithSeverity,
       redFlag: showRedFlag,
     });
     setSaving(false);
@@ -215,18 +231,14 @@ export function PatientCheckIn() {
           </div>
         )}
 
-        {/* Step 1: Wellbeing Scores */}
+        {/* Step 1: Wellbeing */}
         {step === 1 && (
           <div className="bg-white rounded-2xl border border-[#E7E5E1] p-5 space-y-5 shadow-sm">
-            <p className="text-sm text-[#747B7D]">Rate how you've been feeling over the past week.</p>
-            <ScoreSlider label="Appetite" value={form.appetiteScore} onChange={v => setForm(f => ({ ...f, appetiteScore: v }))}
-              help="1 = no appetite, 10 = strong appetite" />
-            <ScoreSlider label="Energy" value={form.energyScore} onChange={v => setForm(f => ({ ...f, energyScore: v }))}
-              help="1 = exhausted, 10 = very energetic" />
-            <ScoreSlider label="Mood" value={form.moodScore} onChange={v => setForm(f => ({ ...f, moodScore: v }))}
-              help="1 = very low mood, 10 = excellent mood" />
-            <ScoreSlider label="Sleep Quality" value={form.sleepScore} onChange={v => setForm(f => ({ ...f, sleepScore: v }))}
-              help="1 = very poor, 10 = excellent" />
+            <p className="text-sm text-[#747B7D]">How have you been feeling over the past week?</p>
+            <WellbeingChips label="Appetite" value={form.appetiteScore} onChange={v => setForm(f => ({ ...f, appetiteScore: v }))} />
+            <WellbeingChips label="Energy" value={form.energyScore} onChange={v => setForm(f => ({ ...f, energyScore: v }))} />
+            <WellbeingChips label="Mood" value={form.moodScore} onChange={v => setForm(f => ({ ...f, moodScore: v }))} />
+            <WellbeingChips label="Sleep Quality" value={form.sleepScore} onChange={v => setForm(f => ({ ...f, sleepScore: v }))} />
           </div>
         )}
 
@@ -291,6 +303,26 @@ export function PatientCheckIn() {
                 );
               })}
             </div>
+            {hasActiveSideEffects && (
+              <div>
+                <p className="text-xs font-semibold text-[#3C4346] mb-2 uppercase tracking-wide">Overall Severity</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {SEVERITY_OPTIONS.map(({ label, value }) => (
+                    <button key={value} type="button"
+                      onClick={() => setForm(f => ({ ...f, severity: value as 'mild' | 'moderate' | 'severe' }))}
+                      className={`py-2.5 rounded-xl text-xs font-semibold border transition-all ${
+                        form.severity === value
+                          ? value === 'severe' ? 'bg-red-500 text-white border-red-500'
+                            : value === 'moderate' ? 'bg-[#8A4D3C] text-white border-[#8A4D3C]'
+                            : 'bg-[#0F6D6D] text-white border-[#0F6D6D]'
+                          : 'bg-white text-[#3C4346] border-[#E7E5E1]'
+                      }`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {showRedFlag && (
               <SafetyAlert
                 type="red-flag"
@@ -313,9 +345,14 @@ export function PatientCheckIn() {
             <div className="bg-[#F6F3EE] rounded-xl border border-[#E7E5E1] p-4 space-y-1.5 text-xs text-[#3C4346]">
               <p className="font-semibold text-[#1B3D34] mb-2">Check-in summary</p>
               <p>Weight: <strong>{form.weightKg} kg</strong>{form.waistCm && ` · Waist: ${form.waistCm} cm`}</p>
-              <p>Appetite {form.appetiteScore}/10 · Energy {form.energyScore}/10 · Mood {form.moodScore}/10 · Sleep {form.sleepScore}/10</p>
+              <p>
+                Appetite: {WELLBEING_OPTIONS.find(o => o.value === form.appetiteScore)?.label ?? form.appetiteScore} ·{' '}
+                Energy: {WELLBEING_OPTIONS.find(o => o.value === form.energyScore)?.label ?? form.energyScore} ·{' '}
+                Mood: {WELLBEING_OPTIONS.find(o => o.value === form.moodScore)?.label ?? form.moodScore} ·{' '}
+                Sleep: {WELLBEING_OPTIONS.find(o => o.value === form.sleepScore)?.label ?? form.sleepScore}
+              </p>
               <p>Exercise: {form.exerciseLevel} · Alcohol: {form.alcoholIntake}</p>
-              <p>Side effects: {form.sideEffects.join(', ')}</p>
+              <p>Side effects: {form.sideEffects.join(', ')}{hasActiveSideEffects && form.severity ? ` (${form.severity})` : ''}</p>
             </div>
           </div>
         )}

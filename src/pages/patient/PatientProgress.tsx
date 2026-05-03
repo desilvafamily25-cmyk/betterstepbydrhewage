@@ -18,6 +18,7 @@ export function PatientProgress() {
   const [nsvs, setNsvs] = useLocalStorage<string[]>('nsvs', []);
   const [showNsvPicker, setShowNsvPicker] = useState(false);
   const [activeTab, setActiveTab] = useState('Weight');
+  const [range, setRange] = useState<30 | 60 | 0>(30);
 
   if (loading) {
     return (
@@ -35,8 +36,15 @@ export function PatientProgress() {
   const change = weightChange(patient.startingWeightKg, patient.currentWeightKg);
   const pct = percentBodyWeightChange(patient.startingWeightKg, patient.currentWeightKg);
 
+  const cutoff = range === 0 ? null : (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - range);
+    return d.toISOString().split('T')[0];
+  })();
+  const filteredCheckIns = cutoff ? checkIns.filter(c => c.date >= cutoff) : checkIns;
+
   const sideEffectCounts: Record<string, number> = {};
-  checkIns.forEach(c => {
+  filteredCheckIns.forEach(c => {
     c.sideEffects.filter(e => e !== 'none').forEach(e => {
       sideEffectCounts[e] = (sideEffectCounts[e] || 0) + 1;
     });
@@ -81,6 +89,14 @@ export function PatientProgress() {
 
         {/* Charts */}
         <div className="bg-white rounded-2xl border border-[#E7E5E1] p-4 shadow-sm">
+          <div className="flex justify-end gap-1.5 mb-3">
+            {([30, 60, 0] as const).map(r => (
+              <button key={r} onClick={() => setRange(r)}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${range === r ? 'bg-[#1B3D34] text-white border-[#1B3D34]' : 'text-[#3C4346] border-[#E7E5E1]'}`}>
+                {r === 0 ? 'All' : `${r}d`}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-2 mb-4 border-b border-[#E7E5E1] pb-3">
             {tabs.map(t => (
               <button key={t} onClick={() => setActiveTab(t)}
@@ -98,23 +114,28 @@ export function PatientProgress() {
             <>
               {activeTab === 'Weight' && (
                 <>
-                  <h3 className="font-semibold text-[#1B3D34] mb-3">Weight Trend</h3>
-                  <ProgressChart checkIns={checkIns} goalWeight={patient.goalWeightKg} dataKey="weightKg" />
+                  <p className="text-sm text-[#3C4346] mb-3">
+                    {change < 0
+                      ? `You've lost ${Math.abs(change)} kg since starting.`
+                      : change > 0
+                        ? `You've gained ${change} kg since starting.`
+                        : 'Your weight is unchanged since starting.'
+                    }
+                    {' '}
+                    {patient.currentWeightKg > patient.goalWeightKg
+                      ? `${(patient.currentWeightKg - patient.goalWeightKg).toFixed(1)} kg to go.`
+                      : 'You\'ve reached your goal weight!'
+                    }
+                  </p>
+                  <ProgressChart checkIns={filteredCheckIns} goalWeight={patient.goalWeightKg} dataKey="weightKg" />
                   <p className="text-xs text-[#747B7D] mt-2 text-center">Goal: {patient.goalWeightKg} kg</p>
-                  {patient.currentWeightKg > patient.goalWeightKg && (
-                    <div className="flex justify-center mt-2">
-                      <span className="bg-[#B8735E]/15 text-[#B8735E] text-xs font-bold px-3 py-1.5 rounded-full">
-                        {(patient.currentWeightKg - patient.goalWeightKg).toFixed(1)} kg to goal
-                      </span>
-                    </div>
-                  )}
                 </>
               )}
 
               {activeTab === 'Waist' && (
                 <>
                   <h3 className="font-semibold text-[#1B3D34] mb-3">Waist Trend</h3>
-                  <ProgressChart checkIns={checkIns} dataKey="waistCm" label="Waist (cm)" colour="#0F6D6D" />
+                  <ProgressChart checkIns={filteredCheckIns} dataKey="waistCm" label="Waist (cm)" colour="#0F6D6D" />
                 </>
               )}
 
@@ -130,7 +151,7 @@ export function PatientProgress() {
                     ].map(({ key, label, colour }) => (
                       <div key={key}>
                         <p className="text-xs font-semibold text-[#3C4346] mb-1">{label}</p>
-                        <ScoreTrendChart checkIns={checkIns} dataKey={key} label={label} colour={colour} />
+                        <ScoreTrendChart checkIns={filteredCheckIns} dataKey={key} label={label} colour={colour} />
                       </div>
                     ))}
                   </div>
@@ -141,7 +162,7 @@ export function PatientProgress() {
         </div>
 
         {/* Side effect summary */}
-        {Object.keys(sideEffectCounts).length > 0 && (
+        {Object.keys(sideEffectCounts).length > 0 && filteredCheckIns.length > 0 && (
           <div className="bg-white rounded-2xl border border-[#E7E5E1] p-4 shadow-sm">
             <h3 className="font-semibold text-[#1B3D34] mb-3">Side Effect History</h3>
             <div className="space-y-2">
