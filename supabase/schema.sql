@@ -137,6 +137,22 @@ create table if not exists public.clinician_notes (
   created_at      timestamptz default now() not null
 );
 
+-- Clinic-to-patient messages. One-way: clinicians send; patients read/archive.
+create table if not exists public.patient_messages (
+  id            uuid primary key default gen_random_uuid(),
+  patient_id    uuid not null references public.patients(id) on delete cascade,
+  clinician_id  uuid not null references public.profiles(id),
+  subject       text not null,
+  body          text not null,
+  priority      text not null default 'normal'
+    check (priority in ('normal', 'important', 'urgent')),
+  status        text not null default 'unread'
+    check (status in ('unread', 'read', 'archived')),
+  created_at    timestamptz default now() not null,
+  read_at       timestamptz,
+  archived_at   timestamptz
+);
+
 -- ============================================================
 -- Row Level Security
 -- ============================================================
@@ -147,6 +163,7 @@ alter table public.check_ins       enable row level security;
 alter table public.medications     enable row level security;
 alter table public.reminders       enable row level security;
 alter table public.clinician_notes enable row level security;
+alter table public.patient_messages enable row level security;
 
 -- profiles: users see their own row; clinicians see all
 create policy "Own profile" on public.profiles
@@ -207,3 +224,57 @@ create policy "Clinician note access" on public.clinician_notes
       select 1 from public.profiles where id = auth.uid() and role = 'clinician'
     )
   );
+
+-- patient_messages: clinicians send/read all; patients read and update their own inbox
+create policy "Clinicians can read messages" on public.patient_messages
+  for select using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'clinician'
+    )
+  );
+
+create policy "Patients can read own messages" on public.patient_messages
+  for select using (
+    exists (
+      select 1 from public.patients p
+      where p.id = patient_id and p.user_id = auth.uid()
+    )
+  );
+
+create policy "Clinicians can send messages" on public.patient_messages
+  for insert with check (
+    clinician_id = auth.uid()
+    and exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'clinician'
+    )
+  );
+
+create policy "Clinicians can update messages" on public.patient_messages
+  for update using (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'clinician'
+    )
+  ) with check (
+    exists (
+      select 1 from public.profiles
+      where id = auth.uid() and role = 'clinician'
+    )
+  );
+
+create policy "Patients can update own message status" on public.patient_messages
+  for update using (
+    exists (
+      select 1 from public.patients p
+      where p.id = patient_id and p.user_id = auth.uid()
+    )
+  ) with check (
+    exists (
+      select 1 from public.patients p
+      where p.id = patient_id and p.user_id = auth.uid()
+    )
+  );
+
+grant select, insert, update on public.patient_messages to authenticated;

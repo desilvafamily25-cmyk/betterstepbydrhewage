@@ -121,6 +121,27 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['clinician_notes']['Row'], 'id' | 'created_at'> & { id?: string };
         Update: Partial<Omit<Database['public']['Tables']['clinician_notes']['Row'], 'id' | 'patient_id' | 'created_at'>>;
       };
+      patient_messages: {
+        Row: {
+          id: string;
+          patient_id: string;
+          clinician_id: string;
+          subject: string;
+          body: string;
+          priority: 'normal' | 'important' | 'urgent';
+          status: 'unread' | 'read' | 'archived';
+          created_at: string;
+          read_at: string | null;
+          archived_at: string | null;
+        };
+        Insert: Omit<Database['public']['Tables']['patient_messages']['Row'], 'id' | 'created_at' | 'read_at' | 'archived_at'> & {
+          id?: string;
+          created_at?: string;
+          read_at?: string | null;
+          archived_at?: string | null;
+        };
+        Update: Partial<Omit<Database['public']['Tables']['patient_messages']['Row'], 'id' | 'patient_id' | 'clinician_id' | 'created_at'>>;
+      };
     };
   };
 }

@@ -10,6 +10,7 @@ import { PatientCheckIn } from './pages/patient/PatientCheckIn';
 import { PatientMedication } from './pages/patient/PatientMedication';
 import { PatientProgress } from './pages/patient/PatientProgress';
 import { PatientReminders } from './pages/patient/PatientReminders';
+import { PatientMessages } from './pages/patient/PatientMessages';
 import { PatientEducation } from './pages/patient/PatientEducation';
 import { PatientReviewSummary } from './pages/patient/PatientReviewSummary';
 import { PatientBookReview } from './pages/patient/PatientBookReview';
@@ -82,6 +83,7 @@ export default function App() {
                 <Route path="/patient/medication" element={<PatientMedication />} />
                 <Route path="/patient/progress" element={<PatientProgress />} />
                 <Route path="/patient/reminders" element={<PatientReminders />} />
+                <Route path="/patient/messages" element={<PatientMessages />} />
                 <Route path="/patient/education" element={<PatientEducation />} />
                 <Route path="/patient/review-summary" element={<PatientReviewSummary />} />
                 <Route path="/patient/book-review" element={<PatientBookReview />} />

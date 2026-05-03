@@ -5,7 +5,7 @@ import { signOut } from '../hooks/useAuth';
 import clsx from 'clsx';
 import {
   Home, ClipboardList, TrendingUp, Pill, Bell, BookOpen,
-  FileText, Calendar, Users, Flag, FileCheck, Settings, ChevronLeft, LogOut,
+  FileText, Calendar, Users, Flag, FileCheck, Settings, ChevronLeft, LogOut, Mail,
 } from 'lucide-react';
 
 interface AppShellProps {
@@ -114,6 +114,7 @@ export function AppShell({ role, children, title, showBack }: AppShellProps) {
 export function PatientMoreLinks() {
   const location = useLocation();
   const extras = [
+    { to: '/patient/messages', icon: Mail, label: 'Messages' },
     { to: '/patient/education', icon: BookOpen, label: 'Education' },
     { to: '/patient/review-summary', icon: FileText, label: 'Summary' },
     { to: '/patient/book-review', icon: Calendar, label: 'Book' },

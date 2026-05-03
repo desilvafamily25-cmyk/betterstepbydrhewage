@@ -6,12 +6,13 @@ import { StatCard } from '../../components/StatCard';
 import { MedicationCard } from '../../components/MedicationCard';
 import { SafetyAlert } from '../../components/SafetyAlert';
 import { supabase } from '../../lib/supabase';
-import type { Patient, CheckIn, Medication, ClinicianNote } from '../../types';
+import { useClinicianMessages } from '../../hooks/usePatientMessages';
+import type { Patient, CheckIn, Medication, ClinicianNote, PatientMessagePriority } from '../../types';
 import {
   weightChange, percentBodyWeightChange, latestCheckIn,
   formatDate, daysUntil,
 } from '../../utils';
-import { Copy, Check, Save } from 'lucide-react';
+import { Copy, Check, Save, Send } from 'lucide-react';
 
 const ACTION_BUTTONS = [
   { label: 'Continue current plan', colour: 'bg-[#0F6D6D]' },
@@ -20,6 +21,39 @@ const ACTION_BUTTONS = [
   { label: 'Book GP review', colour: 'bg-[#1B3D34]' },
   { label: 'Needs clinical contact', colour: 'bg-red-600' },
 ];
+
+const MESSAGE_TEMPLATES = [
+  {
+    label: 'Book GP review',
+    subject: 'Please book your GP review',
+    body: 'Please book your next GP review so we can safely continue your weight management plan.',
+    priority: 'important' as PatientMessagePriority,
+  },
+  {
+    label: 'Complete check-in',
+    subject: 'Please complete your check-in',
+    body: 'Please complete your latest check-in when you have a moment so we can review your progress.',
+    priority: 'normal' as PatientMessagePriority,
+  },
+  {
+    label: 'Medication review',
+    subject: 'Medication review reminder',
+    body: 'Your medication review is due soon. Please arrange a review before your next prescription is needed.',
+    priority: 'important' as PatientMessagePriority,
+  },
+  {
+    label: 'Contact clinic',
+    subject: 'Please contact the clinic',
+    body: 'Please contact the clinic when you can so we can discuss your current plan.',
+    priority: 'urgent' as PatientMessagePriority,
+  },
+];
+
+const MESSAGE_PRIORITY_LABELS: Record<PatientMessagePriority, string> = {
+  normal: 'Routine',
+  important: 'Important',
+  urgent: 'Urgent',
+};
 
 function dbPatient(row: Record<string, unknown>): Patient {
   return {
@@ -95,6 +129,17 @@ export function ClinicianPatientDetail() {
   const [followUp, setFollowUp] = useState('4');
   const [noteSaved, setNoteSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [messageSubject, setMessageSubject] = useState('');
+  const [messageBody, setMessageBody] = useState('');
+  const [messagePriority, setMessagePriority] = useState<PatientMessagePriority>('normal');
+  const [messageStatus, setMessageStatus] = useState<'idle' | 'sent' | 'error'>('idle');
+  const [sendingMessage, setSendingMessage] = useState(false);
+
+  const {
+    messages: recentMessages,
+    loading: messagesLoading,
+    sendMessage,
+  } = useClinicianMessages(id);
 
   useEffect(() => {
     if (!id) return;
@@ -153,6 +198,37 @@ export function ClinicianPatientDetail() {
     if (data) setNotes(prev => [dbNote(data as Record<string, unknown>), ...prev]);
     setNoteSaved(true);
     setTimeout(() => setNoteSaved(false), 2000);
+  };
+
+  const applyMessageTemplate = (template: typeof MESSAGE_TEMPLATES[number]) => {
+    setMessageSubject(template.subject);
+    setMessageBody(template.body);
+    setMessagePriority(template.priority);
+    setMessageStatus('idle');
+  };
+
+  const handleSendMessage = async () => {
+    const subject = messageSubject.trim();
+    const body = messageBody.trim();
+    if (!subject || !body) {
+      setMessageStatus('error');
+      return;
+    }
+
+    setSendingMessage(true);
+    const { error } = await sendMessage({ subject, body, priority: messagePriority });
+    setSendingMessage(false);
+
+    if (error) {
+      setMessageStatus('error');
+      return;
+    }
+
+    setMessageSubject('');
+    setMessageBody('');
+    setMessagePriority('normal');
+    setMessageStatus('sent');
+    setTimeout(() => setMessageStatus('idle'), 2500);
   };
 
   const sideEffectCounts: Record<string, number> = {};
@@ -263,6 +339,114 @@ export function ClinicianPatientDetail() {
               className="bg-[#3C4346] text-white rounded-xl px-3 py-2.5 text-xs font-semibold">
               Generate consult note
             </Link>
+          </div>
+        </div>
+
+        {/* Patient message composer */}
+        <div className="bg-white rounded-2xl border border-[#E7E5E1] p-4 shadow-sm space-y-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <h3 className="font-semibold text-[#1B3D34]">Send Patient Message</h3>
+              <p className="text-xs text-[#747B7D] mt-1">Routine clinic messages appear in the patient's inbox.</p>
+            </div>
+            {messageStatus === 'sent' && (
+              <span className="rounded-full bg-[#0F6D6D]/10 px-3 py-1 text-xs font-semibold text-[#0F6D6D]">
+                Sent
+              </span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            {MESSAGE_TEMPLATES.map(template => (
+              <button
+                key={template.label}
+                type="button"
+                onClick={() => applyMessageTemplate(template)}
+                className="rounded-xl border border-[#E7E5E1] bg-[#F6F3EE] px-3 py-2 text-left text-xs font-semibold text-[#3C4346]"
+              >
+                {template.label}
+              </button>
+            ))}
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Subject</label>
+            <input
+              className="w-full rounded-xl border border-[#E7E5E1] px-4 py-3 text-sm text-[#1B3D34] focus:outline-none focus:ring-2 focus:ring-[#0F6D6D]"
+              placeholder="e.g. Please book your GP review"
+              value={messageSubject}
+              onChange={e => {
+                setMessageSubject(e.target.value);
+                setMessageStatus('idle');
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Message</label>
+            <textarea
+              className="min-h-28 w-full rounded-xl border border-[#E7E5E1] px-4 py-3 text-sm text-[#3C4346] focus:outline-none focus:ring-2 focus:ring-[#0F6D6D]"
+              placeholder="Write a clear routine care message for the patient."
+              value={messageBody}
+              onChange={e => {
+                setMessageBody(e.target.value);
+                setMessageStatus('idle');
+              }}
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Priority</label>
+            <select
+              className="w-full rounded-xl border border-[#E7E5E1] px-4 py-3 text-sm text-[#3C4346] focus:outline-none focus:ring-2 focus:ring-[#0F6D6D]"
+              value={messagePriority}
+              onChange={e => setMessagePriority(e.target.value as PatientMessagePriority)}
+            >
+              {Object.entries(MESSAGE_PRIORITY_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+              ))}
+            </select>
+          </div>
+
+          {messageStatus === 'error' && (
+            <p className="rounded-xl bg-red-50 border border-red-200 px-3 py-2 text-xs font-medium text-red-700">
+              Add a subject and message, then try sending again.
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSendMessage}
+            disabled={sendingMessage}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-[#1B3D34] py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+          >
+            <Send size={16} />
+            {sendingMessage ? 'Sending...' : 'Send Message'}
+          </button>
+
+          <div className="border-t border-[#E7E5E1] pt-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#3C4346]">Recent sent messages</p>
+            {messagesLoading ? (
+              <p className="text-xs text-[#747B7D] mt-2">Loading messages...</p>
+            ) : recentMessages.length === 0 ? (
+              <p className="text-xs text-[#747B7D] mt-2">No patient messages sent yet.</p>
+            ) : (
+              <div className="mt-2 space-y-2">
+                {recentMessages.map(message => (
+                  <div key={message.id} className="rounded-xl border border-[#E7E5E1] bg-[#F6F3EE] p-3">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-semibold text-[#1B3D34]">{message.subject}</p>
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-[#747B7D]">
+                        {MESSAGE_PRIORITY_LABELS[message.priority]}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#747B7D] mt-1">
+                      {formatDate(message.createdAt.split('T')[0])} - {message.status}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

@@ -8,6 +8,8 @@ export type AlcoholIntake = 'none' | 'low' | 'moderate' | 'high';
 export type MedicationName = 'Ozempic' | 'Wegovy' | 'Mounjaro' | 'Saxenda' | 'Trulicity' | 'Other';
 export type ReminderType = 'weight-check' | 'medication-dose' | 'gp-review' | 'prescription-review' | 'pathology' | 'lifestyle';
 export type ReminderStatus = 'pending' | 'acknowledged' | 'dismissed';
+export type PatientMessagePriority = 'normal' | 'important' | 'urgent';
+export type PatientMessageStatus = 'unread' | 'read' | 'archived';
 
 export interface SafetyAnswers {
   pregnant: boolean;
@@ -90,6 +92,19 @@ export interface ClinicianNote {
   note: string;
   plan: string;
   followUpWeeks: number;
+}
+
+export interface PatientMessage {
+  id: string;
+  patientId: string;
+  clinicianId: string;
+  subject: string;
+  body: string;
+  priority: PatientMessagePriority;
+  status: PatientMessageStatus;
+  createdAt: string;
+  readAt?: string | null;
+  archivedAt?: string | null;
 }
 
 export interface NonScaleVictory {
