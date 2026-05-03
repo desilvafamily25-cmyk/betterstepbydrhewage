@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { MedicationCard } from '../../components/MedicationCard';
 import { SafetyAlert } from '../../components/SafetyAlert';
+import { InjectionSiteTracker } from '../../components/InjectionSiteTracker';
+import { DoseTimeline } from '../../components/DoseTimeline';
 import { usePatientData } from '../../hooks/usePatientData';
 import type { Medication } from '../../types';
 import { Plus, X, Pencil, Trash2 } from 'lucide-react';
@@ -206,10 +208,10 @@ export function PatientMedication() {
         )}
 
         {medications.map(med => (
-          <div key={med.id}>
+          <div key={med.id} className="space-y-3">
             <MedicationCard medication={med} />
             {!showForm && (
-              <div className="flex gap-2 mt-2 justify-end">
+              <div className="flex gap-2 justify-end">
                 <button
                   onClick={() => openEditForm(med)}
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E7E5E1] bg-white text-xs font-medium text-[#3C4346] hover:border-[#1B3D34] hover:text-[#1B3D34]"
@@ -224,6 +226,8 @@ export function PatientMedication() {
                 </button>
               </div>
             )}
+            {!showForm && <DoseTimeline medication={med} />}
+            {!showForm && <InjectionSiteTracker />}
           </div>
         ))}
 

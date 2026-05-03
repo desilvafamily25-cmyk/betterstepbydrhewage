@@ -3,7 +3,7 @@ import { AppShell } from '../../components/AppShell';
 import { usePatientData } from '../../hooks/usePatientData';
 import { weightChange, percentBodyWeightChange, formatDate } from '../../utils';
 import { APP_CONFIG } from '../../config';
-import { Printer, Copy, Calendar, Check } from 'lucide-react';
+import { Printer, Copy, Calendar, Check, Download } from 'lucide-react';
 
 export function PatientReviewSummary() {
   const { patient, checkIns, medications, loading } = usePatientData();
@@ -40,12 +40,19 @@ export function PatientReviewSummary() {
     });
   });
 
-  const avgAppetite = checkIns.length > 0
-    ? (checkIns.reduce((s, c) => s + c.appetiteScore, 0) / checkIns.length).toFixed(1)
-    : '—';
+  const avg = (key: 'appetiteScore' | 'energyScore' | 'moodScore' | 'sleepScore') =>
+    checkIns.length > 0
+      ? (checkIns.reduce((s, c) => s + c[key], 0) / checkIns.length).toFixed(1)
+      : '—';
+
+  const avgAppetite = avg('appetiteScore');
+  const avgEnergy = avg('energyScore');
+  const avgMood = avg('moodScore');
+  const avgSleep = avg('sleepScore');
 
   const exerciseDays = checkIns.filter(c => c.exerciseLevel !== 'none').length;
   const proteinDays = checkIns.filter(c => c.proteinFocus).length;
+  const waterDays = checkIns.filter(c => c.waterFocus).length;
   const hasRedFlag = checkIns.some(c => c.redFlag);
 
   const waistChange = firstCheckIn?.waistCm && latestCheckIn?.waistCm
@@ -75,9 +82,13 @@ ${Object.keys(sideEffectCounts).length === 0 ? 'No side effects recorded' : Obje
 ${hasRedFlag ? '\n⚠️ RED FLAG SYMPTOMS REPORTED — see details' : ''}
 
 WELLBEING & LIFESTYLE
-Average appetite score: ${avgAppetite}/10
-Exercise days recorded: ${exerciseDays} of ${checkIns.length} check-ins
+Average appetite: ${avgAppetite}/10
+Average energy: ${avgEnergy}/10
+Average mood: ${avgMood}/10
+Average sleep: ${avgSleep}/10
+Exercise days: ${exerciseDays} of ${checkIns.length} check-ins
 Protein focus days: ${proteinDays} of ${checkIns.length} check-ins
+Water focus days: ${waterDays} of ${checkIns.length} check-ins
 
 PATIENT QUESTIONS FOR GP REVIEW
 ${questions || 'None recorded'}
@@ -116,6 +127,11 @@ It is intended to support GP review, not replace clinical assessment.
         {/* Print area */}
         <div className="bg-white rounded-2xl border border-[#E7E5E1] shadow-sm overflow-hidden print-summary">
           <div className="p-5 space-y-4">
+            {/* Print-only header */}
+            <div className="print-only border-b border-[#E7E5E1] pb-4 mb-2">
+              <p className="text-lg font-bold text-[#1B3D34]">BetterStep — Weight Management Summary</p>
+              <p className="text-sm text-[#3C4346]">{patient.name} · Generated {new Date().toLocaleDateString('en-AU', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
             {/* Weight */}
             <section>
               <h3 className="text-xs font-bold text-[#1B3D34] uppercase tracking-wide mb-3 border-b border-[#E7E5E1] pb-1">
@@ -197,10 +213,27 @@ It is intended to support GP review, not replace clinical assessment.
               <h3 className="text-xs font-bold text-[#1B3D34] uppercase tracking-wide mb-3 border-b border-[#E7E5E1] pb-1">
                 Wellbeing & Lifestyle
               </h3>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                {[
+                  { label: 'Appetite', value: avgAppetite },
+                  { label: 'Energy', value: avgEnergy },
+                  { label: 'Mood', value: avgMood },
+                  { label: 'Sleep', value: avgSleep },
+                ].map(({ label, value }) => {
+                  const num = parseFloat(value);
+                  const colour = isNaN(num) ? 'text-[#747B7D]' : num >= 7 ? 'text-[#0F6D6D]' : num >= 5 ? 'text-[#8A4D3C]' : 'text-red-600';
+                  return (
+                    <div key={label} className="bg-[#F6F3EE] rounded-xl p-3 text-center">
+                      <p className={`text-lg font-bold ${colour}`}>{value}</p>
+                      <p className="text-xs text-[#747B7D]">Avg {label}</p>
+                    </div>
+                  );
+                })}
+              </div>
               <div className="text-sm space-y-1">
-                <div className="flex justify-between"><span className="text-[#3C4346]">Average appetite score</span><span className="font-medium">{avgAppetite}/10</span></div>
                 <div className="flex justify-between"><span className="text-[#3C4346]">Exercise days</span><span className="font-medium">{exerciseDays}/{checkIns.length}</span></div>
                 <div className="flex justify-between"><span className="text-[#3C4346]">Protein focus days</span><span className="font-medium">{proteinDays}/{checkIns.length}</span></div>
+                <div className="flex justify-between"><span className="text-[#3C4346]">Water focus days</span><span className="font-medium">{waterDays}/{checkIns.length}</span></div>
               </div>
             </section>
 
@@ -232,22 +265,32 @@ It is intended to support GP review, not replace clinical assessment.
         </div>
 
         {/* Actions */}
-        <div className="grid grid-cols-3 gap-3">
-          <button onClick={() => window.print()}
-            className="flex flex-col items-center gap-1.5 bg-white border border-[#E7E5E1] rounded-2xl py-4 text-[#3C4346] hover:border-[#1B3D34] hover:text-[#1B3D34] shadow-sm">
-            <Printer size={20} />
-            <span className="text-xs font-medium">Print</span>
-          </button>
+        <div className="grid grid-cols-2 gap-3">
           <button onClick={handleCopy}
             className={`flex flex-col items-center gap-1.5 rounded-2xl py-4 shadow-sm border ${copied ? 'bg-[#0F6D6D]/10 border-[#0F6D6D]/30 text-[#0F6D6D]' : 'bg-white border-[#E7E5E1] text-[#3C4346] hover:border-[#1B3D34] hover:text-[#1B3D34]'}`}>
             {copied ? <Check size={20} /> : <Copy size={20} />}
-            <span className="text-xs font-medium">{copied ? 'Copied!' : 'Copy'}</span>
+            <span className="text-xs font-medium">{copied ? 'Copied!' : 'Copy text'}</span>
           </button>
           <a href={APP_CONFIG.bookingUrl} target="_blank" rel="noopener noreferrer"
             className="flex flex-col items-center gap-1.5 bg-[#1B3D34] rounded-2xl py-4 text-white shadow-sm">
             <Calendar size={20} />
-            <span className="text-xs font-medium">Book</span>
+            <span className="text-xs font-medium">Book review</span>
           </a>
+        </div>
+
+        {/* PDF export */}
+        <button
+          onClick={() => window.print()}
+          className="w-full flex items-center justify-center gap-2.5 bg-white border border-[#E7E5E1] rounded-2xl py-4 text-[#3C4346] hover:border-[#1B3D34] hover:text-[#1B3D34] shadow-sm"
+        >
+          <Download size={18} />
+          <span className="text-sm font-semibold">Print / Save as PDF</span>
+        </button>
+        <div className="bg-[#F6F3EE] rounded-xl border border-[#E7E5E1] p-3">
+          <p className="text-xs text-[#747B7D] leading-relaxed text-center">
+            <strong>To save as PDF:</strong> tap Print, then choose "Save as PDF" as the destination in your print dialog.
+            Navigation and buttons are hidden in the printed version.
+          </p>
         </div>
       </div>
     </AppShell>
