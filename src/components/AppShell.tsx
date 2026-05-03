@@ -2,6 +2,7 @@ import { type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { APP_CONFIG } from '../config';
 import { signOut } from '../hooks/useAuth';
+import { usePatientMessages } from '../hooks/usePatientMessages';
 import clsx from 'clsx';
 import {
   Home, ClipboardList, TrendingUp, Pill, Bell, BookOpen,
@@ -113,26 +114,43 @@ export function AppShell({ role, children, title, showBack }: AppShellProps) {
 // Extra nav links for patient (shown in page or header)
 export function PatientMoreLinks() {
   const location = useLocation();
+  const { unreadCount } = usePatientMessages();
+  const hasUnread = unreadCount > 0;
+
   const extras = [
     { to: '/patient/messages', icon: Mail, label: 'Messages' },
     { to: '/patient/education', icon: BookOpen, label: 'Education' },
     { to: '/patient/review-summary', icon: FileText, label: 'Summary' },
     { to: '/patient/book-review', icon: Calendar, label: 'Book' },
   ];
+
   return (
     <div className="flex gap-2 flex-wrap">
       {extras.map(({ to, icon: Icon, label }) => {
         const active = location.pathname === to;
+        const isMessages = to === '/patient/messages';
+        const highlight = isMessages && hasUnread && !active;
+
         return (
           <Link key={to} to={to}
             className={clsx(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border',
+              'relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all',
               active
                 ? 'bg-[#1B3D34] text-white border-[#1B3D34]'
+                : highlight
+                ? 'bg-[#B8735E] text-white border-[#B8735E] shadow-md'
                 : 'bg-white text-[#3C4346] border-[#E7E5E1] hover:border-[#1B3D34] hover:text-[#1B3D34]'
             )}>
             <Icon size={14} />
             {label}
+            {highlight && (
+              <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d64045] opacity-75" />
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-[#d64045] text-white text-[8px] font-bold items-center justify-center">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              </span>
+            )}
           </Link>
         );
       })}
