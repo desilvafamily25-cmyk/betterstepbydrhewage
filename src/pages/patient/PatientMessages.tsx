@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { usePatientMessages } from '../../hooks/usePatientMessages';
 import type { PatientMessage, PatientMessagePriority } from '../../types';
-import { AlertTriangle, Archive, ChevronDown, ChevronUp, Mail, Info, Clock } from 'lucide-react';
+import { AlertTriangle, Archive, ChevronDown, ChevronUp, Mail, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
 const priorityStyles: Record<PatientMessagePriority, { label: string; className: string }> = {
