@@ -1,12 +1,30 @@
 import { useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
+import { ChevronDown, ChevronUp, BookOpen, PlayCircle, X } from 'lucide-react';
+
+interface VideoItem {
+  title: string;
+  description: string;
+  tag: string;
+  tagColour: string;
+  embedUrl: string;
+}
 
 interface EducationCard {
   title: string;
   content: string;
   tag: string;
 }
+
+const VIDEO_LIBRARY: VideoItem[] = [
+  {
+    title: 'How to use the Ozempic pen',
+    description: 'Step-by-step guide to preparing and injecting your weekly Ozempic dose safely.',
+    tag: 'Ozempic',
+    tagColour: 'bg-[#0F6D6D]/10 text-[#0F6D6D]',
+    embedUrl: 'https://nni-video.videomarketingplatform.co/v.ihtml/player.html?token=89300d04546cef764b792e1fb2f7132c&source=embed&photo_id=90732263',
+  },
+];
 
 const EDUCATION_CARDS: EducationCard[] = [
   {
@@ -61,6 +79,75 @@ const EDUCATION_CARDS: EducationCard[] = [
   },
 ];
 
+const TAG_COLOUR: Record<string, string> = {
+  'Medication': 'bg-[#0F6D6D]/10 text-[#0F6D6D]',
+  'Side Effects': 'bg-[#DCC9B0]/45 text-[#8A4D3C]',
+  'Nutrition': 'bg-[#0F6D6D]/10 text-[#0F6D6D]',
+  'Review': 'bg-[#DCC9B0]/45 text-[#8A4D3C]',
+  'Safety': 'bg-red-100 text-red-700',
+  'Progress': 'bg-teal-100 text-teal-700',
+  'Long Term': 'bg-[#E7E5E1] text-[#3C4346]',
+};
+
+function VideoCard({ video }: { video: VideoItem }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="bg-white rounded-2xl border border-[#E7E5E1] shadow-sm overflow-hidden">
+      {/* Collapsed: thumbnail-style tap target */}
+      {!open ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="w-full text-left"
+        >
+          {/* Dark green banner with play icon */}
+          <div className="bg-gradient-to-br from-[#1B3D34] to-[#0F6D6D] px-5 py-8 flex flex-col items-center justify-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-white/20 flex items-center justify-center">
+              <PlayCircle size={36} className="text-white" />
+            </div>
+            <p className="text-white/80 text-xs font-medium">Tap to watch</p>
+          </div>
+          <div className="px-4 py-3">
+            <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${video.tagColour}`}>
+              {video.tag}
+            </span>
+            <p className="text-sm font-bold text-[#1B3D34] mt-2 leading-snug">{video.title}</p>
+            <p className="text-xs text-[#747B7D] mt-1 leading-relaxed">{video.description}</p>
+          </div>
+        </button>
+      ) : (
+        <div>
+          {/* 16:9 iframe */}
+          <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+            <iframe
+              src={video.embedUrl}
+              title={video.title}
+              allow="autoplay; fullscreen"
+              allowFullScreen
+              className="absolute inset-0 w-full h-full border-0"
+            />
+          </div>
+          {/* Info bar below player */}
+          <div className="px-4 py-3 flex items-start justify-between gap-3">
+            <div className="flex-1 min-w-0">
+              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${video.tagColour}`}>
+                {video.tag}
+              </span>
+              <p className="text-sm font-bold text-[#1B3D34] mt-1.5 leading-snug">{video.title}</p>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="flex-shrink-0 w-7 h-7 rounded-xl bg-[#F6F3EE] flex items-center justify-center text-[#747B7D] mt-1"
+            >
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function PatientEducation() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [filter, setFilter] = useState<string>('All');
@@ -68,68 +155,81 @@ export function PatientEducation() {
   const tags = ['All', ...Array.from(new Set(EDUCATION_CARDS.map(c => c.tag)))];
   const filtered = filter === 'All' ? EDUCATION_CARDS : EDUCATION_CARDS.filter(c => c.tag === filter);
 
-  const tagColour: Record<string, string> = {
-    'Medication': 'bg-[#0F6D6D]/10 text-[#0F6D6D]',
-    'Side Effects': 'bg-[#DCC9B0]/45 text-[#8A4D3C]',
-    'Nutrition': 'bg-[#0F6D6D]/10 text-[#0F6D6D]',
-    'Review': 'bg-[#DCC9B0]/45 text-[#8A4D3C]',
-    'Safety': 'bg-red-100 text-red-700',
-    'Progress': 'bg-teal-100 text-teal-700',
-    'Long Term': 'bg-[#E7E5E1] text-[#3C4346]',
-  };
-
   return (
     <AppShell role="patient" title="Education Library" showBack>
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 bg-[#1B3D34]/10 rounded-2xl p-3">
-          <BookOpen size={18} className="text-[#1B3D34]" />
-          <p className="text-sm text-[#1B3D34] font-medium">GP-approved patient education handouts</p>
-        </div>
+      <div className="space-y-5">
 
-        {/* Filter chips */}
-        <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-          {tags.map(tag => (
-            <button key={tag} onClick={() => setFilter(tag)}
-              className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${filter === tag ? 'bg-[#1B3D34] text-white border-[#1B3D34]' : 'bg-white text-[#3C4346] border-[#E7E5E1]'}`}>
-              {tag}
-            </button>
+        {/* ── Video section ── */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <PlayCircle size={17} className="text-[#1B3D34]" />
+            <h2 className="text-sm font-bold text-[#1B3D34] uppercase tracking-wide">How-to Videos</h2>
+          </div>
+          {VIDEO_LIBRARY.map((video, i) => (
+            <VideoCard key={i} video={video} />
           ))}
         </div>
 
-        <div className="space-y-3">
-          {filtered.map((card, i) => {
-            const isOpen = expanded === i;
-            return (
-              <div key={i} className="bg-white rounded-2xl border border-[#E7E5E1] shadow-sm overflow-hidden">
-                <button
-                  onClick={() => setExpanded(isOpen ? null : i)}
-                  className="w-full px-5 py-4 flex items-start gap-3 text-left"
-                >
-                  <div className="flex-1 min-w-0">
-                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${tagColour[card.tag] || 'bg-[#E7E5E1] text-[#3C4346]'}`}>
-                      {card.tag}
-                    </span>
-                    <p className="text-sm font-semibold text-[#1B3D34] mt-1.5 leading-snug">{card.title}</p>
-                  </div>
-                  {isOpen ? <ChevronUp size={18} className="text-[#747B7D] mt-1 flex-shrink-0" /> : <ChevronDown size={18} className="text-[#747B7D] mt-1 flex-shrink-0" />}
-                </button>
-                {isOpen && (
-                  <div className="px-5 pb-5 border-t border-[#f0f0f0]">
-                    <div className="pt-4 text-sm text-[#3C4346] leading-relaxed whitespace-pre-line">
-                      {card.content}
+        {/* Divider */}
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px bg-[#E7E5E1]" />
+          <span className="text-xs text-[#747B7D] font-medium">Reading</span>
+          <div className="flex-1 h-px bg-[#E7E5E1]" />
+        </div>
+
+        {/* ── Written handouts ── */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 bg-[#1B3D34]/10 rounded-2xl p-3">
+            <BookOpen size={18} className="text-[#1B3D34]" />
+            <p className="text-sm text-[#1B3D34] font-medium">GP-approved patient education handouts</p>
+          </div>
+
+          {/* Filter chips */}
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {tags.map(tag => (
+              <button key={tag} onClick={() => setFilter(tag)}
+                className={`flex-shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${filter === tag ? 'bg-[#1B3D34] text-white border-[#1B3D34]' : 'bg-white text-[#3C4346] border-[#E7E5E1]'}`}>
+                {tag}
+              </button>
+            ))}
+          </div>
+
+          <div className="space-y-3">
+            {filtered.map((card, i) => {
+              const isOpen = expanded === i;
+              return (
+                <div key={i} className="bg-white rounded-2xl border border-[#E7E5E1] shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : i)}
+                    className="w-full px-5 py-4 flex items-start gap-3 text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${TAG_COLOUR[card.tag] || 'bg-[#E7E5E1] text-[#3C4346]'}`}>
+                        {card.tag}
+                      </span>
+                      <p className="text-sm font-semibold text-[#1B3D34] mt-1.5 leading-snug">{card.title}</p>
                     </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                    {isOpen ? <ChevronUp size={18} className="text-[#747B7D] mt-1 flex-shrink-0" /> : <ChevronDown size={18} className="text-[#747B7D] mt-1 flex-shrink-0" />}
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 border-t border-[#f0f0f0]">
+                      <div className="pt-4 text-sm text-[#3C4346] leading-relaxed whitespace-pre-line">
+                        {card.content}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="bg-[#F6F3EE] rounded-2xl border border-[#E7E5E1] p-4">
           <p className="text-xs text-[#747B7D] text-center leading-relaxed">
-            These handouts are for general information only. They do not replace personalised medical advice from your GP.
+            These resources are for general information only. They do not replace personalised medical advice from your GP.
           </p>
         </div>
+
       </div>
     </AppShell>
   );
