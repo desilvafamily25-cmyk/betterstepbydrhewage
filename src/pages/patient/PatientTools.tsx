@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { Calculator, Utensils, Search, Info, AlertTriangle, Loader2, ExternalLink, Copy, Check } from 'lucide-react';
 import { searchFoods, getFoodDetails, getProteinNutrient, type FoodSearchResult, type FoodDetail } from '../../lib/usdaApi';
+import { usePatientData } from '../../hooks/usePatientData';
 
 const inputClass = 'w-full rounded-xl border border-[#E7E5E1] bg-white px-4 py-3 text-sm text-[#1B3D34] focus:outline-none focus:ring-2 focus:ring-[#1B3D34]';
 const selectClass = inputClass;
@@ -9,10 +10,15 @@ const btnPrimary = 'w-full bg-[#1B3D34] text-white rounded-xl py-3 text-sm font-
 const btnOutline = 'w-full border-2 border-[#1B3D34] text-[#1B3D34] rounded-xl py-3 text-sm font-semibold hover:bg-[#1B3D34] hover:text-white transition-colors';
 
 // ── BMI Calculator ──────────────────────────────────────────────
-function BMICalculator() {
-  const [height, setHeight] = useState('');
-  const [weight, setWeight] = useState('');
+function BMICalculator({ initialHeight, initialWeight, goalWeightKg }: { initialHeight?: number; initialWeight?: number; goalWeightKg?: number }) {
+  const [height, setHeight] = useState(initialHeight ? String(Math.round(initialHeight)) : '');
+  const [weight, setWeight] = useState(initialWeight ? String(initialWeight) : '');
   const [showResult, setShowResult] = useState(false);
+
+  useEffect(() => {
+    if (initialHeight && !height) setHeight(String(Math.round(initialHeight)));
+    if (initialWeight && !weight) setWeight(String(initialWeight));
+  }, [initialHeight, initialWeight]);
 
   const calculateBMI = () => {
     const h = parseFloat(height) / 100;
@@ -68,8 +74,14 @@ function BMICalculator() {
           <div className="bg-gradient-to-br from-[#1B3D34] to-[#0F6D6D] rounded-2xl p-6 text-center text-white">
             <p className="text-white/70 text-sm font-medium mb-1">Your BMI</p>
             <p className="text-5xl font-bold mb-2">{bmi}</p>
-            {bmiData && <p className={`text-lg font-semibold ${bmiData.colour.replace('text-', 'text-white/')}`}>{bmiData.category}</p>}
-            {bmiData && <p className="text-xl font-bold text-white">{bmiData.category}</p>}
+            {bmiData && <p className="text-lg font-semibold text-white/90">{bmiData.category}</p>}
+            {goalWeightKg && height && (() => {
+              const h = parseFloat(height) / 100;
+              const goalBmi = (goalWeightKg / (h * h)).toFixed(1);
+              return (
+                <p className="text-sm text-white/60 mt-2">Programme target: BMI {goalBmi} (at {goalWeightKg} kg)</p>
+              );
+            })()}
           </div>
 
           {/* Scale */}
@@ -94,7 +106,7 @@ function BMICalculator() {
             <p className="text-sm text-[#8A4D3C] leading-relaxed">{getRecommendation(bmiNum)}</p>
           </div>
 
-          <button onClick={() => { setHeight(''); setWeight(''); setShowResult(false); }} className={btnOutline}>
+          <button onClick={() => { setHeight(initialHeight ? String(Math.round(initialHeight)) : ''); setWeight(initialWeight ? String(initialWeight) : ''); setShowResult(false); }} className={btnOutline}>
             Calculate Again
           </button>
           <p className="text-xs text-[#747B7D] text-center">General information only — not a substitute for medical advice.</p>
@@ -105,11 +117,15 @@ function BMICalculator() {
 }
 
 // ── Protein Calculator ───────────────────────────────────────────
-function ProteinCalculator() {
+function ProteinCalculator({ initialWeight }: { initialWeight?: number }) {
   const [mode, setMode] = useState<'quick' | 'advanced'>('quick');
   const [showResult, setShowResult] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [form, setForm] = useState({ weight: '', age: '', goal: 'general', activity: 'sedentary', pregnant: false, ckd: false });
+  const [form, setForm] = useState({ weight: initialWeight ? String(initialWeight) : '', age: '', goal: 'general', activity: 'sedentary', pregnant: false, ckd: false });
+
+  useEffect(() => {
+    if (initialWeight && !form.weight) setForm(f => ({ ...f, weight: String(initialWeight) }));
+  }, [initialWeight]);
 
   const calculate = () => {
     const weight = parseFloat(form.weight);
@@ -278,7 +294,7 @@ function ProteinCalculator() {
             </>
           )}
 
-          <button onClick={() => { setForm({ weight: '', age: '', goal: 'general', activity: 'sedentary', pregnant: false, ckd: false }); setShowResult(false); }} className={btnOutline}>
+          <button onClick={() => { setForm({ weight: initialWeight ? String(initialWeight) : '', age: '', goal: 'general', activity: 'sedentary', pregnant: false, ckd: false }); setShowResult(false); }} className={btnOutline}>
             Calculate Again
           </button>
 
@@ -462,6 +478,7 @@ const TOOLS: { id: ToolId; label: string; icon: typeof Calculator; description: 
 export function PatientTools() {
   const [active, setActive] = useState<ToolId>('bmi');
   const tool = TOOLS.find(t => t.id === active)!;
+  const { patient } = usePatientData();;
 
   return (
     <AppShell role="patient" title="Health Tools" showBack>
@@ -493,8 +510,8 @@ export function PatientTools() {
             </div>
           </div>
           <div className="p-5">
-            {active === 'bmi'     && <BMICalculator />}
-            {active === 'protein' && <ProteinCalculator />}
+            {active === 'bmi'     && <BMICalculator initialHeight={patient?.heightCm} initialWeight={patient?.currentWeightKg} goalWeightKg={patient?.goalWeightKg} />}
+            {active === 'protein' && <ProteinCalculator initialWeight={patient?.currentWeightKg} />}
             {active === 'lookup'  && <FoodProteinLookup />}
           </div>
         </div>

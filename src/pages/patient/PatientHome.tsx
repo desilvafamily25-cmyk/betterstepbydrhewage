@@ -7,7 +7,7 @@ import { SafetyAlert } from '../../components/SafetyAlert';
 import { InstallAppBanner } from '../../components/InstallAppBanner';
 import { usePatientData } from '../../hooks/usePatientData';
 import { weightChange, percentBodyWeightChange, daysUntil, formatDate, latestCheckIn } from '../../utils';
-import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles } from 'lucide-react';
+import { ClipboardList, TrendingUp, Pill, FileText, Calendar, Sparkles, CheckCircle2 } from 'lucide-react';
 import { APP_CONFIG } from '../../config';
 
 export function PatientHome() {
@@ -36,6 +36,9 @@ export function PatientHome() {
   }
 
   if (!patient) return null;
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  const todayDone = latest?.date === todayStr;
 
   const change = weightChange(patient.startingWeightKg, patient.currentWeightKg);
   const pct = percentBodyWeightChange(patient.startingWeightKg, patient.currentWeightKg);
@@ -72,6 +75,25 @@ export function PatientHome() {
             {latest ? `Last logged: ${formatDate(latest.date)}` : 'Start your first check-in today'}
           </p>
         </div>
+
+        {/* Today's check-in CTA — dominant action */}
+        {todayDone ? (
+          <div className="flex items-center gap-3 bg-[#0F6D6D]/10 border border-[#0F6D6D]/25 rounded-2xl px-5 py-4">
+            <CheckCircle2 size={22} className="text-[#0F6D6D] flex-shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-[#0F6D6D]">Today's log complete ✓</p>
+              <p className="text-xs text-[#0F6D6D]/70 mt-0.5">Check your progress in the Progress tab.</p>
+            </div>
+          </div>
+        ) : (
+          <Link
+            to="/patient/check-in"
+            className="flex items-center justify-center gap-2.5 bg-[#1B3D34] text-white rounded-2xl px-5 py-4 text-base font-bold shadow-md w-full"
+          >
+            <ClipboardList size={20} />
+            Log Today's Check-in
+          </Link>
+        )}
 
         {/* PWA install prompt */}
         <InstallAppBanner />

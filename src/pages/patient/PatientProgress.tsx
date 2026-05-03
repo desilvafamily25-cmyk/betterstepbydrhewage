@@ -101,6 +101,13 @@ export function PatientProgress() {
                   <h3 className="font-semibold text-[#1B3D34] mb-3">Weight Trend</h3>
                   <ProgressChart checkIns={checkIns} goalWeight={patient.goalWeightKg} dataKey="weightKg" />
                   <p className="text-xs text-[#747B7D] mt-2 text-center">Goal: {patient.goalWeightKg} kg</p>
+                  {patient.currentWeightKg > patient.goalWeightKg && (
+                    <div className="flex justify-center mt-2">
+                      <span className="bg-[#B8735E]/15 text-[#B8735E] text-xs font-bold px-3 py-1.5 rounded-full">
+                        {(patient.currentWeightKg - patient.goalWeightKg).toFixed(1)} kg to goal
+                      </span>
+                    </div>
+                  )}
                 </>
               )}
 

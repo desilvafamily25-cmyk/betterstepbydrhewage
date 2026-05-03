@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { AppShell } from '../../components/AppShell';
 import { usePatientMessages } from '../../hooks/usePatientMessages';
 import type { PatientMessage, PatientMessagePriority } from '../../types';
-import { AlertTriangle, Archive, ChevronDown, ChevronUp, Mail } from 'lucide-react';
+import { AlertTriangle, Archive, ChevronDown, ChevronUp, Mail, Info, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
 const priorityStyles: Record<PatientMessagePriority, { label: string; className: string }> = {
@@ -103,10 +103,17 @@ export function PatientMessages() {
   return (
     <AppShell role="patient" title="Messages" showBack>
       <div className="space-y-5">
-        <div className="flex items-start gap-3 bg-[#DCC9B0]/35 border border-[#DCC9B0] rounded-2xl p-4">
-          <AlertTriangle size={18} className="text-[#B8735E] flex-shrink-0 mt-0.5" />
-          <p className="text-sm text-[#8A4D3C] leading-relaxed">
-            Messages are for routine care only. If you are seriously unwell, call 000 or attend your nearest emergency department.
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-2xl p-4">
+          <AlertTriangle size={18} className="text-red-600 flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-red-800 leading-relaxed">
+            <strong>Emergency?</strong> Call <strong>000</strong> or attend your nearest emergency department immediately. Do not wait for a message reply.
+          </p>
+        </div>
+
+        <div className="flex items-start gap-3 bg-[#0F6D6D]/10 border border-[#0F6D6D]/20 rounded-2xl p-4">
+          <Clock size={16} className="text-[#0F6D6D] flex-shrink-0 mt-0.5" />
+          <p className="text-sm text-[#0F6D6D] leading-relaxed">
+            Dr. Hewage typically responds within <strong>1 working day</strong>. Messages are not monitored outside clinic hours or on weekends.
           </p>
         </div>
 

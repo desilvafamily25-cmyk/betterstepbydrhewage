@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signIn, signUp, sendPasswordReset } from '../../hooks/useAuth';
 import { APP_CONFIG } from '../../config';
-import { Eye, EyeOff, Mail, Lock, User, Stethoscope, ChevronLeft, CheckCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Stethoscope, ChevronLeft, CheckCircle } from 'lucide-react';
 
 type AuthMode = 'login' | 'register' | 'forgot';
 
@@ -198,29 +198,32 @@ export function AuthPage() {
               </div>
             </div>
 
-            {/* Role selector */}
-            <div>
-              <label className="block text-xs font-semibold text-[#3C4346] mb-2 uppercase tracking-wide">I am a</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button type="button" onClick={() => setRole('patient')}
-                  className={`flex items-center gap-2.5 p-3.5 rounded-xl border font-medium text-sm transition-all ${role === 'patient' ? 'border-[#1B3D34] bg-[#1B3D34]/10 text-[#1B3D34]' : 'border-[#E7E5E1] bg-white text-[#3C4346]'}`}>
-                  <User size={18} /> Patient
-                </button>
+            {role === 'clinician' ? (
+              <div className="bg-[#0F6D6D]/10 border border-[#0F6D6D]/20 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Stethoscope size={16} className="text-[#0F6D6D]" />
+                    <span className="text-sm font-semibold text-[#0F6D6D]">Clinician registration</span>
+                  </div>
+                  <button type="button" onClick={() => { setRole('patient'); setClinicianCode(''); }}
+                    className="text-xs text-[#747B7D] underline">Switch to Patient</button>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Clinician Access Code</label>
+                  <input type="text" className={inputClass} value={clinicianCode}
+                    onChange={e => setClinicianCode(e.target.value.toUpperCase())}
+                    placeholder="Provided by the clinic" />
+                  <p className="text-xs text-[#747B7D] mt-1">Contact {APP_CONFIG.clinicName} for your access code.</p>
+                </div>
+              </div>
+            ) : (
+              <p className="text-xs text-center text-[#747B7D]">
+                Registering as a clinician?{' '}
                 <button type="button" onClick={() => setRole('clinician')}
-                  className={`flex items-center gap-2.5 p-3.5 rounded-xl border font-medium text-sm transition-all ${role === 'clinician' ? 'border-[#0F6D6D] bg-[#0F6D6D]/10 text-[#0F6D6D]' : 'border-[#E7E5E1] bg-white text-[#3C4346]'}`}>
-                  <Stethoscope size={18} /> Clinician
+                  className="text-[#1B3D34] font-semibold underline">
+                  Use a clinician access code
                 </button>
-              </div>
-            </div>
-
-            {role === 'clinician' && (
-              <div>
-                <label className="block text-xs font-semibold text-[#3C4346] mb-1.5 uppercase tracking-wide">Clinician Access Code</label>
-                <input type="text" className={inputClass} value={clinicianCode}
-                  onChange={e => setClinicianCode(e.target.value.toUpperCase())}
-                  placeholder="Provided by the clinic" />
-                <p className="text-xs text-[#747B7D] mt-1">Contact {APP_CONFIG.clinicName} for your access code.</p>
-              </div>
+              </p>
             )}
 
             <button type="submit" disabled={loading}

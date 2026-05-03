@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { AppShell } from '../../components/AppShell';
-import { ChevronDown, ChevronUp, BookOpen, PlayCircle, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, BookOpen, PlayCircle, X, Sparkles } from 'lucide-react';
+import { usePatientData } from '../../hooks/usePatientData';
+import { latestCheckIn } from '../../utils';
 
 interface VideoItem {
   title: string;
@@ -148,9 +150,28 @@ function VideoCard({ video }: { video: VideoItem }) {
   );
 }
 
+const SIDE_EFFECT_TO_TITLES: Record<string, string[]> = {
+  nausea: ['Managing nausea', 'Common side effects and what to do'],
+  vomiting: ['Managing nausea', 'When to seek urgent help'],
+  constipation: ['Managing constipation', 'Common side effects and what to do'],
+  diarrhoea: ['Common side effects and what to do'],
+  reflux: ['Managing nausea', 'Common side effects and what to do'],
+  'abdominal pain': ['When to seek urgent help', 'Common side effects and what to do'],
+  dizziness: ['Common side effects and what to do', 'When to seek urgent help'],
+};
+
 export function PatientEducation() {
   const [expanded, setExpanded] = useState<number | null>(null);
   const [filter, setFilter] = useState<string>('All');
+  const { patient, checkIns } = usePatientData();
+
+  const latest = patient ? latestCheckIn(checkIns, patient.id) : undefined;
+  const recentSideEffects = latest?.sideEffects.filter(e => e !== 'none') ?? [];
+
+  const recommendedTitles = Array.from(new Set(
+    recentSideEffects.flatMap(e => SIDE_EFFECT_TO_TITLES[e] ?? [])
+  ));
+  const recommendedCards = EDUCATION_CARDS.filter(c => recommendedTitles.includes(c.title));
 
   const tags = ['All', ...Array.from(new Set(EDUCATION_CARDS.map(c => c.tag)))];
   const filtered = filter === 'All' ? EDUCATION_CARDS : EDUCATION_CARDS.filter(c => c.tag === filter);
@@ -158,6 +179,43 @@ export function PatientEducation() {
   return (
     <AppShell role="patient" title="Education Library" showBack>
       <div className="space-y-5">
+
+        {/* ── Recommended for you ── */}
+        {recommendedCards.length > 0 && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles size={17} className="text-[#B8735E]" />
+              <h2 className="text-sm font-bold text-[#1B3D34] uppercase tracking-wide">Recommended for you</h2>
+            </div>
+            <p className="text-xs text-[#747B7D] -mt-1">Based on side effects you logged recently.</p>
+            {recommendedCards.map((card, i) => {
+              const globalIdx = EDUCATION_CARDS.indexOf(card);
+              const isOpen = expanded === globalIdx;
+              return (
+                <div key={i} className="bg-white rounded-2xl border border-[#B8735E]/30 shadow-sm overflow-hidden">
+                  <button
+                    onClick={() => setExpanded(isOpen ? null : globalIdx)}
+                    className="w-full px-5 py-4 flex items-start gap-3 text-left"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${TAG_COLOUR[card.tag] || 'bg-[#E7E5E1] text-[#3C4346]'}`}>
+                        {card.tag}
+                      </span>
+                      <p className="text-sm font-semibold text-[#1B3D34] mt-1.5 leading-snug">{card.title}</p>
+                    </div>
+                    {isOpen ? <ChevronUp size={18} className="text-[#747B7D] mt-1 flex-shrink-0" /> : <ChevronDown size={18} className="text-[#747B7D] mt-1 flex-shrink-0" />}
+                  </button>
+                  {isOpen && (
+                    <div className="px-5 pb-5 border-t border-[#f0f0f0]">
+                      <div className="pt-4 text-sm text-[#3C4346] leading-relaxed whitespace-pre-line">{card.content}</div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+            <div className="flex-1 h-px bg-[#E7E5E1] my-1" />
+          </div>
+        )}
 
         {/* ── Video section ── */}
         <div className="space-y-3">
