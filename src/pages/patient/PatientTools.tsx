@@ -469,10 +469,29 @@ function FoodProteinLookup() {
 // ── Page ─────────────────────────────────────────────────────────
 type ToolId = 'bmi' | 'protein' | 'lookup';
 
-const TOOLS: { id: ToolId; label: string; icon: typeof Calculator; description: string }[] = [
-  { id: 'bmi',     label: 'BMI',            icon: Calculator, description: 'Calculate your Body Mass Index' },
-  { id: 'protein', label: 'Protein Target', icon: Utensils,   description: 'Find your daily protein goal' },
-  { id: 'lookup',  label: 'Food Lookup',    icon: Search,     description: 'Search protein content by food' },
+const TOOLS: {
+  id: ToolId; label: string; icon: typeof Calculator;
+  description: string; sub: string;
+  cardBg: string; border: string; iconColour: string; iconBg: string;
+}[] = [
+  {
+    id: 'bmi', label: 'BMI', icon: Calculator,
+    description: 'Calculate your Body Mass Index', sub: 'Body Mass Index',
+    cardBg: 'bg-[#0F6D6D]/10', border: 'border-[#0F6D6D]/25',
+    iconColour: 'text-[#0F6D6D]', iconBg: 'bg-[#0F6D6D]/15',
+  },
+  {
+    id: 'protein', label: 'Protein', icon: Utensils,
+    description: 'Find your daily protein goal', sub: 'Daily target',
+    cardBg: 'bg-[#B8735E]/10', border: 'border-[#B8735E]/25',
+    iconColour: 'text-[#8A4D3C]', iconBg: 'bg-[#B8735E]/15',
+  },
+  {
+    id: 'lookup', label: 'Food Lookup', icon: Search,
+    description: 'Search protein content by food', sub: 'Search by food',
+    cardBg: 'bg-[#1B3D34]/10', border: 'border-[#1B3D34]/20',
+    iconColour: 'text-[#1B3D34]', iconBg: 'bg-[#1B3D34]/15',
+  },
 ];
 
 export function PatientTools() {
@@ -490,9 +509,14 @@ export function PatientTools() {
             const isActive = active === t.id;
             return (
               <button key={t.id} onClick={() => setActive(t.id)}
-                className={`flex flex-col items-center gap-1.5 rounded-2xl border py-3 px-2 transition-all ${isActive ? 'bg-[#1B3D34] border-[#1B3D34]' : 'bg-white border-[#E7E5E1] hover:border-[#1B3D34]'}`}>
-                <Icon size={18} className={isActive ? 'text-white' : 'text-[#1B3D34]'} />
-                <span className={`text-[11px] font-semibold text-center leading-tight ${isActive ? 'text-white' : 'text-[#3C4346]'}`}>{t.label}</span>
+                className={`flex flex-col items-center gap-2 rounded-2xl border py-4 px-2 transition-all shadow-sm ${isActive ? 'bg-[#1B3D34] border-[#1B3D34]' : `${t.cardBg} ${t.border}`}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isActive ? 'bg-white/15' : t.iconBg}`}>
+                  <Icon size={18} strokeWidth={1.8} className={isActive ? 'text-white' : t.iconColour} />
+                </div>
+                <div className="text-center">
+                  <p className={`text-[11px] font-bold leading-tight ${isActive ? 'text-white' : t.iconColour}`}>{t.label}</p>
+                  <p className={`text-[9px] leading-tight mt-0.5 ${isActive ? 'text-white/65' : 'text-[#747B7D]'}`}>{t.sub}</p>
+                </div>
               </button>
             );
           })}
