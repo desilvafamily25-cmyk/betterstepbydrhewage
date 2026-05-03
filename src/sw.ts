@@ -14,7 +14,6 @@ self.addEventListener('push', (event: PushEvent) => {
       icon: '/betterstep-app-icon.png',
       badge: '/favicon.png',
       tag: 'betterstep-message',
-      renotify: true,
       data: { url: data.url ?? '/patient/messages' },
     })
   );
