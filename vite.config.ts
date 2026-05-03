@@ -14,7 +14,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.png', 'betterstep-brand-logo.png', 'betterstep-app-icon.png'],
       injectManifest: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,mp4,vtt}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,vtt}'],
+        globIgnores: ['**/*.mp4'],
       },
       manifest: {
         name: 'BetterStep by Dr. Hewage',
