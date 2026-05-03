@@ -14,13 +14,6 @@ import {
 } from '../../utils';
 import { Copy, Check, Save, Send } from 'lucide-react';
 
-const ACTION_BUTTONS = [
-  { label: 'Continue current plan', colour: 'bg-[#0F6D6D]' },
-  { label: 'Consider dose review', colour: 'bg-[#0F6D6D]' },
-  { label: 'Manage side effects', colour: 'bg-[#0F6D6D]' },
-  { label: 'Book GP review', colour: 'bg-[#1B3D34]' },
-  { label: 'Needs clinical contact', colour: 'bg-red-600' },
-];
 
 const MESSAGE_TEMPLATES = [
   {
@@ -342,22 +335,11 @@ export function ClinicianPatientDetail() {
           )}
         </div>
 
-        {/* Suggested actions */}
-        <div className="bg-white rounded-2xl border border-[#E7E5E1] p-4 shadow-sm">
-          <h3 className="font-semibold text-[#1B3D34] mb-3">Suggested Actions</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {ACTION_BUTTONS.map(({ label, colour }) => (
-              <button key={label}
-                className={`${colour} text-white rounded-xl px-3 py-2.5 text-xs font-semibold text-left`}>
-                {label}
-              </button>
-            ))}
-            <Link to="/clinician/templates" state={{ patientId: id }}
-              className="bg-[#3C4346] text-white rounded-xl px-3 py-2.5 text-xs font-semibold">
-              Generate consult note
-            </Link>
-          </div>
-        </div>
+        {/* Generate consult note */}
+        <Link to="/clinician/templates" state={{ patientId: id }}
+          className="flex items-center justify-center gap-2 bg-[#1B3D34] text-white rounded-2xl px-4 py-3.5 text-sm font-semibold shadow-sm">
+          Generate Consult Note
+        </Link>
 
         {/* Patient message composer */}
         <div className="bg-white rounded-2xl border border-[#E7E5E1] p-4 shadow-sm space-y-4">
