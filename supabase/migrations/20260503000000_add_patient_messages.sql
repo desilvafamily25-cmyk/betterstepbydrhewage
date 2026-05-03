@@ -35,7 +35,7 @@ using (
   exists (
     select 1 from public.patients
     where patients.id = patient_messages.patient_id
-    and patients.profile_id = auth.uid()
+    and patients.user_id = auth.uid()
   )
 );
 
@@ -66,7 +66,7 @@ using (
   exists (
     select 1 from public.patients
     where patients.id = patient_messages.patient_id
-    and patients.profile_id = auth.uid()
+    and patients.user_id = auth.uid()
   )
 );
 
