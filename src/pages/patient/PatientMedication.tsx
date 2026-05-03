@@ -98,6 +98,28 @@ export function PatientMedication() {
     setErrors({});
   };
 
+  const handleStartDateChange = (dateStr: string) => {
+    setErrors(e => ({ ...e, startDate: undefined }));
+    if (!dateStr) { setForm(f => ({ ...f, startDate: '' })); return; }
+
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = dayNames[d.getDay()];
+
+    const rxDate = new Date(year, month - 1, day + 28);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const rxStr = `${rxDate.getFullYear()}-${pad(rxDate.getMonth() + 1)}-${pad(rxDate.getDate())}`;
+
+    setForm(f => ({
+      ...f,
+      startDate: dateStr,
+      nextDoseDate: dateStr,
+      medicationDay: f.frequency === 'Daily injection' ? 'Daily' : dayName,
+      prescriptionReviewDate: rxStr,
+    }));
+  };
+
   const handleSave = async () => {
     const newErrors: { dose?: string; startDate?: string } = {};
     if (!form.dose) newErrors.dose = 'Please select a dose';
@@ -246,7 +268,7 @@ export function PatientMedication() {
                       : ''
                   }`}>
                     <input type="date" className={inputClass} value={form.startDate}
-                      onChange={e => { setForm(f => ({ ...f, startDate: e.target.value })); setErrors(e2 => ({ ...e2, startDate: undefined })); }} />
+                      onChange={e => handleStartDateChange(e.target.value)} />
                   </div>
                   {errors.startDate && <p className="text-xs text-red-500 mt-1">{errors.startDate}</p>}
                 </div>
