@@ -54,7 +54,7 @@ const MED_CONFIG: MedConfig[] = [
 
 const BLANK_MED: Omit<Medication, 'id' | 'patientId'> = {
   name: 'Ozempic',
-  dose: '',
+  dose: '0.25 mg',
   startDate: '',
   frequency: 'Weekly injection',
   medicationDay: 'Wednesday',

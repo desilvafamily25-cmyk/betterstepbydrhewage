@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pill, CheckCircle2 } from 'lucide-react';
+import { Pill, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Medication } from '../types';
 import { daysUntil } from '../utils';
 
@@ -39,6 +40,29 @@ export function MedicationDoseCard({ medication, onLogDose }: Props) {
   const [confirming, setConfirming] = useState(false);
   const [takenDate, setTakenDate] = useState(todayStr);
   const [saving, setSaving] = useState(false);
+
+  // If no next dose date is set yet, show a prompt to edit the medication
+  if (!medication.nextDoseDate) {
+    return (
+      <div className="rounded-2xl border border-[#E7E5E1] bg-white shadow-sm overflow-hidden">
+        <div className="bg-[#1B3D34] px-4 py-3 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+            <Pill size={16} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white font-bold text-sm leading-tight">{medication.name}</p>
+            <p className="text-white/80 text-xs">{medication.dose} · {medication.frequency}</p>
+          </div>
+        </div>
+        <div className="px-4 py-3 flex items-center justify-between">
+          <p className="text-sm text-[#747B7D]">No dose schedule set yet.</p>
+          <Link to="/patient/medication" className="flex items-center gap-1 text-sm font-semibold text-[#1B3D34]">
+            Edit <ArrowRight size={14} />
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const daysToNext = daysUntil(medication.nextDoseDate);
   const isOverdue = daysToNext < 0;
