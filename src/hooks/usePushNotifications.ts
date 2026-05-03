@@ -3,17 +3,6 @@ import { supabase } from '../lib/supabase';
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
 
-function urlBase64ToUint8Array(base64: string): Uint8Array {
-  const padding = '='.repeat((4 - (base64.length % 4)) % 4);
-  const b64 = (base64 + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const raw = window.atob(b64);
-  const output = new Uint8Array(raw.length);
-  for (let i = 0; i < raw.length; i++) {
-    output[i] = raw.charCodeAt(i);
-  }
-  return output;
-}
-
 async function saveSubscription(patientId: string, sub: PushSubscription) {
   const json = sub.toJSON();
   await supabase.from('push_subscriptions').upsert(
@@ -40,7 +29,7 @@ export function usePushNotifications(patientId: string | undefined) {
     setPermission(Notification.permission as PushPermission);
   }, []);
 
-  // Silently re-register an existing subscription when permission is already granted
+  // Silently re-save an existing subscription when permission is already granted
   useEffect(() => {
     if (!patientId || permission !== 'granted') return;
     if (!('serviceWorker' in navigator) || !VAPID_PUBLIC_KEY) return;
@@ -61,9 +50,10 @@ export function usePushNotifications(patientId: string | undefined) {
       if (result !== 'granted') return false;
 
       const reg = await navigator.serviceWorker.ready;
+      // Pass VAPID key as a string — the Push API accepts base64url strings directly
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+        applicationServerKey: VAPID_PUBLIC_KEY,
       });
       await saveSubscription(patientId, sub);
       return true;
