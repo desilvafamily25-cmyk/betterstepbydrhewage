@@ -132,26 +132,34 @@ export function PatientMoreLinks() {
   const location = useLocation();
 
   const extras = [
-    { to: '/patient/tools',          icon: Calculator, label: 'Tools' },
-    { to: '/patient/education',      icon: BookOpen,   label: 'Education' },
-    { to: '/patient/review-summary', icon: FileText,   label: 'Summary' },
-    { to: '/patient/book-review',    icon: Calendar,   label: 'Book' },
+    { to: '/patient/tools',          icon: Calculator, label: 'Tools',      sub: 'BMI & protein',     iconBg: 'bg-[#0F6D6D]/10 text-[#0F6D6D]' },
+    { to: '/patient/education',      icon: BookOpen,   label: 'Education',  sub: 'Articles & videos', iconBg: 'bg-[#1B3D34]/10 text-[#1B3D34]' },
+    { to: '/patient/review-summary', icon: FileText,   label: 'GP Summary', sub: 'Print & share',     iconBg: 'bg-[#DCC9B0]/50 text-[#8A4D3C]' },
+    { to: '/patient/book-review',    icon: Calendar,   label: 'Book Review', sub: 'Schedule a visit', iconBg: 'bg-[#1B3D34]/10 text-[#1B3D34]' },
   ];
 
   return (
-    <div className="flex gap-2 flex-wrap">
-      {extras.map(({ to, icon: Icon, label }) => {
+    <div className="grid grid-cols-2 gap-2.5">
+      {extras.map(({ to, icon: Icon, label, sub, iconBg }) => {
         const active = location.pathname === to;
         return (
           <Link key={to} to={to}
             className={clsx(
-              'flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-all',
+              'flex items-center gap-3 rounded-2xl border p-3.5 transition-all shadow-sm',
               active
-                ? 'bg-[#1B3D34] text-white border-[#1B3D34]'
-                : 'bg-white text-[#3C4346] border-[#E7E5E1] hover:border-[#1B3D34] hover:text-[#1B3D34]'
+                ? 'bg-[#1B3D34] border-[#1B3D34]'
+                : 'bg-white border-[#E7E5E1] hover:border-[#1B3D34]/30 hover:shadow-md'
             )}>
-            <Icon size={14} />
-            {label}
+            <div className={clsx(
+              'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
+              active ? 'bg-white/15' : iconBg
+            )}>
+              <Icon size={17} strokeWidth={1.8} />
+            </div>
+            <div className="min-w-0">
+              <p className={clsx('text-xs font-bold leading-tight', active ? 'text-white' : 'text-[#1B3D34]')}>{label}</p>
+              <p className={clsx('text-[10px] leading-tight mt-0.5', active ? 'text-white/65' : 'text-[#747B7D]')}>{sub}</p>
+            </div>
           </Link>
         );
       })}
