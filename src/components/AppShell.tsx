@@ -132,23 +132,53 @@ export function PatientMoreLinks() {
   const location = useLocation();
 
   const extras = [
-    { to: '/patient/tools',          icon: Calculator, label: 'Tools',      sub: 'BMI & protein',     iconBg: 'bg-[#0F6D6D]/10 text-[#0F6D6D]' },
-    { to: '/patient/education',      icon: BookOpen,   label: 'Education',  sub: 'Articles & videos', iconBg: 'bg-[#1B3D34]/10 text-[#1B3D34]' },
-    { to: '/patient/review-summary', icon: FileText,   label: 'GP Summary', sub: 'Print & share',     iconBg: 'bg-[#DCC9B0]/50 text-[#8A4D3C]' },
-    { to: '/patient/book-review',    icon: Calendar,   label: 'Book Review', sub: 'Schedule a visit', iconBg: 'bg-[#1B3D34]/10 text-[#1B3D34]' },
+    {
+      to: '/patient/tools',
+      icon: Calculator,
+      label: 'Tools',
+      sub: 'BMI & protein',
+      cardBg: 'bg-[#0F6D6D]/10 border-[#0F6D6D]/20',
+      iconBg: 'bg-[#0F6D6D]/20 text-[#0F6D6D]',
+      labelColour: 'text-[#0F6D6D]',
+    },
+    {
+      to: '/patient/education',
+      icon: BookOpen,
+      label: 'Education',
+      sub: 'Articles & videos',
+      cardBg: 'bg-[#1B3D34]/10 border-[#1B3D34]/15',
+      iconBg: 'bg-[#1B3D34]/20 text-[#1B3D34]',
+      labelColour: 'text-[#1B3D34]',
+    },
+    {
+      to: '/patient/review-summary',
+      icon: FileText,
+      label: 'GP Summary',
+      sub: 'Print & share',
+      cardBg: 'bg-[#B8735E]/10 border-[#B8735E]/25',
+      iconBg: 'bg-[#B8735E]/20 text-[#8A4D3C]',
+      labelColour: 'text-[#8A4D3C]',
+    },
+    {
+      to: '/patient/book-review',
+      icon: Calendar,
+      label: 'Book Review',
+      sub: 'Schedule a visit',
+      cardBg: 'bg-[#0F6D6D]/10 border-[#0F6D6D]/20',
+      iconBg: 'bg-[#0F6D6D]/20 text-[#0F6D6D]',
+      labelColour: 'text-[#0F6D6D]',
+    },
   ];
 
   return (
     <div className="grid grid-cols-2 gap-2.5">
-      {extras.map(({ to, icon: Icon, label, sub, iconBg }) => {
+      {extras.map(({ to, icon: Icon, label, sub, cardBg, iconBg, labelColour }) => {
         const active = location.pathname === to;
         return (
           <Link key={to} to={to}
             className={clsx(
               'flex items-center gap-3 rounded-2xl border p-3.5 transition-all shadow-sm',
-              active
-                ? 'bg-[#1B3D34] border-[#1B3D34]'
-                : 'bg-white border-[#E7E5E1] hover:border-[#1B3D34]/30 hover:shadow-md'
+              active ? 'bg-[#1B3D34] border-[#1B3D34]' : cardBg
             )}>
             <div className={clsx(
               'w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0',
@@ -157,7 +187,7 @@ export function PatientMoreLinks() {
               <Icon size={17} strokeWidth={1.8} />
             </div>
             <div className="min-w-0">
-              <p className={clsx('text-xs font-bold leading-tight', active ? 'text-white' : 'text-[#1B3D34]')}>{label}</p>
+              <p className={clsx('text-xs font-bold leading-tight', active ? 'text-white' : labelColour)}>{label}</p>
               <p className={clsx('text-[10px] leading-tight mt-0.5', active ? 'text-white/65' : 'text-[#747B7D]')}>{sub}</p>
             </div>
           </Link>
