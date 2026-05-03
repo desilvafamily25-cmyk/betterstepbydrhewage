@@ -6,7 +6,7 @@ import { usePatientMessages } from '../hooks/usePatientMessages';
 import clsx from 'clsx';
 import {
   Home, ClipboardList, TrendingUp, Pill, Bell, BookOpen,
-  FileText, Calendar, Users, Flag, FileCheck, Settings, ChevronLeft, LogOut, Mail,
+  FileText, Calendar, Users, Flag, FileCheck, Settings, ChevronLeft, LogOut, Mail, Calculator,
 } from 'lucide-react';
 
 interface AppShellProps {
@@ -119,6 +119,7 @@ export function PatientMoreLinks() {
 
   const extras = [
     { to: '/patient/messages', icon: Mail, label: 'Messages' },
+    { to: '/patient/tools', icon: Calculator, label: 'Tools' },
     { to: '/patient/education', icon: BookOpen, label: 'Education' },
     { to: '/patient/review-summary', icon: FileText, label: 'Summary' },
     { to: '/patient/book-review', icon: Calendar, label: 'Book' },
