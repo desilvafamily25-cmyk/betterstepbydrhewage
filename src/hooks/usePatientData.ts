@@ -127,25 +127,39 @@ export function usePatientData() {
     await supabase.from('reminders').update({ status }).eq('id', id);
   };
 
+  const medPayload = (med: Omit<Medication, 'id' | 'patientId'>) => ({
+    name: med.name,
+    dose: med.dose,
+    start_date: med.startDate || null,
+    frequency: med.frequency,
+    medication_day: med.medicationDay,
+    next_dose_date: med.nextDoseDate || null,
+    prescription_review_date: med.prescriptionReviewDate || null,
+    gp_review_date: med.gpReviewDate || null,
+    tolerance_notes: med.toleranceNotes,
+    estimated_days_remaining: med.estimatedDaysRemaining,
+  });
+
   const saveMedication = async (med: Omit<Medication, 'id' | 'patientId'>) => {
     if (!patientId) return;
     const { data } = await supabase.from('medications').insert({
       patient_id: patientId,
-      name: med.name,
-      dose: med.dose,
-      start_date: med.startDate || null,
-      frequency: med.frequency,
-      medication_day: med.medicationDay,
-      next_dose_date: med.nextDoseDate || null,
-      prescription_review_date: med.prescriptionReviewDate || null,
-      gp_review_date: med.gpReviewDate || null,
-      tolerance_notes: med.toleranceNotes,
-      estimated_days_remaining: med.estimatedDaysRemaining,
+      ...medPayload(med),
     }).select().single();
     if (data) setMedications(prev => [...prev, dbMedToLocal(data as Record<string, unknown>)]);
   };
 
-  return { patient, checkIns, medications, reminders, loading, saveCheckIn, saveMedication, updateReminderStatus, reload: load };
+  const updateMedication = async (id: string, med: Omit<Medication, 'id' | 'patientId'>) => {
+    const { data } = await supabase.from('medications').update(medPayload(med)).eq('id', id).select().single();
+    if (data) setMedications(prev => prev.map(m => m.id === id ? dbMedToLocal(data as Record<string, unknown>) : m));
+  };
+
+  const deleteMedication = async (id: string) => {
+    await supabase.from('medications').delete().eq('id', id);
+    setMedications(prev => prev.filter(m => m.id !== id));
+  };
+
+  return { patient, checkIns, medications, reminders, loading, saveCheckIn, saveMedication, updateMedication, deleteMedication, updateReminderStatus, reload: load };
 }
 
 // For clinician view — loads all patients, check-ins, and medications

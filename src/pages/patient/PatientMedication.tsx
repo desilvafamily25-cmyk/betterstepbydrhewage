@@ -4,7 +4,7 @@ import { MedicationCard } from '../../components/MedicationCard';
 import { SafetyAlert } from '../../components/SafetyAlert';
 import { usePatientData } from '../../hooks/usePatientData';
 import type { Medication } from '../../types';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Pencil, Trash2 } from 'lucide-react';
 
 interface MedConfig {
   brand: string;
@@ -55,7 +55,7 @@ const MED_CONFIG: MedConfig[] = [
 const BLANK_MED: Omit<Medication, 'id' | 'patientId'> = {
   name: 'Ozempic',
   dose: '',
-  startDate: new Date().toISOString().split('T')[0],
+  startDate: '',
   frequency: 'Weekly injection',
   medicationDay: 'Wednesday',
   nextDoseDate: '',
@@ -65,9 +65,18 @@ const BLANK_MED: Omit<Medication, 'id' | 'patientId'> = {
   estimatedDaysRemaining: 28,
 };
 
+const pad = (n: number) => String(n).padStart(2, '0');
+
+function addDays(dateStr: string, days: number): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const d = new Date(year, month - 1, day + days);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
 export function PatientMedication() {
-  const { medications, loading, saveMedication } = usePatientData();
+  const { medications, loading, saveMedication, updateMedication, deleteMedication } = usePatientData();
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ ...BLANK_MED });
   const [justSelected, setJustSelected] = useState(false);
@@ -78,12 +87,43 @@ export function PatientMedication() {
   const selectedConfig = MED_CONFIG.find(m => m.brand === form.name) ?? MED_CONFIG[0];
   const isOther = form.name === 'Other';
 
-  // Clear the pulse highlight after 2.5s
   useEffect(() => {
     if (!justSelected) return;
     const t = setTimeout(() => setJustSelected(false), 2500);
     return () => clearTimeout(t);
   }, [justSelected]);
+
+  const openAddForm = () => {
+    setForm({ ...BLANK_MED });
+    setEditingId(null);
+    setErrors({});
+    setShowForm(true);
+  };
+
+  const openEditForm = (med: Medication) => {
+    setForm({
+      name: med.name,
+      dose: med.dose,
+      startDate: med.startDate,
+      frequency: med.frequency,
+      medicationDay: med.medicationDay,
+      nextDoseDate: med.nextDoseDate,
+      prescriptionReviewDate: med.prescriptionReviewDate,
+      gpReviewDate: med.gpReviewDate,
+      toleranceNotes: med.toleranceNotes,
+      estimatedDaysRemaining: med.estimatedDaysRemaining,
+    });
+    setEditingId(med.id);
+    setErrors({});
+    setShowForm(true);
+  };
+
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingId(null);
+    setForm({ ...BLANK_MED });
+    setErrors({});
+  };
 
   const handleBrandChange = (brand: string) => {
     const config = MED_CONFIG.find(m => m.brand === brand);
@@ -107,16 +147,16 @@ export function PatientMedication() {
     const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const dayName = dayNames[d.getDay()];
 
-    const rxDate = new Date(year, month - 1, day + 28);
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const rxStr = `${rxDate.getFullYear()}-${pad(rxDate.getMonth() + 1)}-${pad(rxDate.getDate())}`;
+    const isDaily = form.frequency === 'Daily injection';
+    const nextDoseDate = addDays(dateStr, isDaily ? 1 : 7);
+    const prescriptionReviewDate = addDays(dateStr, 28);
 
     setForm(f => ({
       ...f,
       startDate: dateStr,
-      nextDoseDate: dateStr,
-      medicationDay: f.frequency === 'Daily injection' ? 'Daily' : dayName,
-      prescriptionReviewDate: rxStr,
+      nextDoseDate,
+      medicationDay: isDaily ? 'Daily' : dayName,
+      prescriptionReviewDate,
     }));
   };
 
@@ -124,16 +164,21 @@ export function PatientMedication() {
     const newErrors: { dose?: string; startDate?: string } = {};
     if (!form.dose) newErrors.dose = 'Please select a dose';
     if (!form.startDate) newErrors.startDate = 'Please enter a start date';
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    if (Object.keys(newErrors).length > 0) { setErrors(newErrors); return; }
+
     setSaving(true);
-    await saveMedication(form);
+    if (editingId) {
+      await updateMedication(editingId, form);
+    } else {
+      await saveMedication(form);
+    }
     setSaving(false);
-    setShowForm(false);
-    setForm({ ...BLANK_MED });
-    setErrors({});
+    closeForm();
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Delete this medication record? This cannot be undone.')) return;
+    await deleteMedication(id);
   };
 
   if (loading) {
@@ -161,15 +206,33 @@ export function PatientMedication() {
         )}
 
         {medications.map(med => (
-          <MedicationCard key={med.id} medication={med} />
+          <div key={med.id}>
+            <MedicationCard medication={med} />
+            {!showForm && (
+              <div className="flex gap-2 mt-2 justify-end">
+                <button
+                  onClick={() => openEditForm(med)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E7E5E1] bg-white text-xs font-medium text-[#3C4346] hover:border-[#1B3D34] hover:text-[#1B3D34]"
+                >
+                  <Pencil size={12} /> Edit
+                </button>
+                <button
+                  onClick={() => handleDelete(med.id)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-200 bg-white text-xs font-medium text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 size={12} /> Delete
+                </button>
+              </div>
+            )}
+          </div>
         ))}
 
         {showForm ? (
           <div className="space-y-3">
             {/* Header */}
             <div className="flex items-center justify-between px-1">
-              <h3 className="font-semibold text-[#1B3D34]">Add Medication</h3>
-              <button onClick={() => setShowForm(false)} className="text-[#747B7D]"><X size={18} /></button>
+              <h3 className="font-semibold text-[#1B3D34]">{editingId ? 'Edit Medication' : 'Add Medication'}</h3>
+              <button onClick={closeForm} className="text-[#747B7D]"><X size={18} /></button>
             </div>
 
             {/* ── Group 1: Medication & Dosing (green tint) ── */}
@@ -258,7 +321,7 @@ export function PatientMedication() {
                   <label className={`block text-xs font-semibold mb-1.5 uppercase tracking-wide transition-colors duration-300 ${
                     justSelected ? 'text-[#1a7a5e]' : errors.startDate ? 'text-red-500' : 'text-[#3C4346]'
                   }`}>
-                    Start Date *
+                    First Dose Date *
                   </label>
                   <div className={`rounded-xl transition-all duration-300 ${
                     justSelected
@@ -332,12 +395,12 @@ export function PatientMedication() {
               disabled={saving || !form.dose}
               className="w-full bg-[#1B3D34] text-white rounded-2xl py-3.5 font-semibold disabled:opacity-60"
             >
-              {saving ? 'Saving…' : 'Save Medication'}
+              {saving ? 'Saving…' : editingId ? 'Save Changes' : 'Save Medication'}
             </button>
           </div>
         ) : (
           <button
-            onClick={() => setShowForm(true)}
+            onClick={openAddForm}
             className="w-full flex items-center justify-center gap-2 border-2 border-dashed border-[#1B3D34]/30 rounded-2xl py-4 text-[#1B3D34] font-medium text-sm hover:bg-[#1B3D34]/5"
           >
             <Plus size={18} /> Add Medication
