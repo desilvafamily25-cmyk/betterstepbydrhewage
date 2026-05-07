@@ -15,6 +15,7 @@ export async function signUp(email: string, password: string, fullName: string, 
     password,
     options: {
       data: { full_name: fullName, role },
+      emailRedirectTo: `${window.location.origin}/auth`,
     },
   });
   return { data, error };
